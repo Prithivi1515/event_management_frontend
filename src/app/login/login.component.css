@@ -1,0 +1,8 @@
+.card-container {
+    max-width: 450px;
+    margin: auto;
+}
+/* Removed display:none so error can be shown when needed */
+.alert {
+    display: none; /* This will be controlled via [ngClass] */
+}

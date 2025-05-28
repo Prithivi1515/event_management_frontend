@@ -1,0 +1,95 @@
+/* Hero Section */
+.hero {
+    height: 80vh;
+    background: linear-gradient(120deg, #00bfae 0%, #7c3aed 100%), 
+                url('https://tse4.mm.bing.net/th/id/OIP.gIQnDpyVuPiTmM0bvu5yCQHaEo?cb=iwc2&rs=1&pid=ImgDetMain') no-repeat center center/cover;
+    padding: 20px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hero .z-1 { z-index: 1; }
+.hero .opacity-75 { opacity: 0.7; background: #1a2233; }
+
+/* Features Section */
+.features {
+    background: linear-gradient(120deg, #e0fcf7 0%, #f3e8ff 100%);
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 2px 12px rgba(0, 191, 174, 0.08);
+}
+
+.feature-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.12);
+    background: linear-gradient(135deg, #00bfae 60%, #ff9100 100%);
+    color: #fff;
+}
+
+.feature-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    background: #f7fafd;
+}
+.feature-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 8px 32px rgba(255, 145, 0, 0.18);
+    background: #e0fcf7;
+}
+
+/* Accent for buttons */
+.btn-primary, .btn-outline-primary {
+    background: linear-gradient(90deg, #00bfae 60%, #7c3aed 100%);
+    border: none;
+}
+.btn-primary:hover, .btn-outline-primary:hover {
+    background: linear-gradient(90deg, #ff9100 60%, #00bfae 100%);
+    color: #fff;
+}
+
+.btn-outline-light {
+    border-color: #fff;
+    color: #fff;
+}
+.btn-outline-light:hover {
+    background: #fff;
+    color: #00bfae;
+}
+
+/* Call to Action Section */
+.bg-primary {
+    background: linear-gradient(90deg, #00bfae 0%, #7c3aed 100%) !important;
+}
+
+.btn-light {
+    color: #00bfae;
+    border: none;
+}
+.btn-light:hover {
+    background: #00bfae;
+    color: #fff;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+    .hero {
+        height: 60vh;
+    }
+    .feature-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+}

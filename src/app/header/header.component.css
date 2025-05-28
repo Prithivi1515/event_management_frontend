@@ -1,0 +1,17 @@
+.navbar-spacer {
+    padding-top: 76px;
+}
+
+@media (max-width: 992px) {
+    .navbar-spacer {
+        padding-top: 80px;
+    }
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.nav-link.active {
+    font-weight: 500;
+}

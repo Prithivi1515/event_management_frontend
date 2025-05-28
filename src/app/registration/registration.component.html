@@ -1,0 +1,79 @@
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="card-container max-width-450 margin-auto">
+      <div class="card shadow-lg border-0 rounded-lg">
+        <div class="card-header bg-dark text-white text-center py-3">
+          <h3 class="mb-0"><i class="bi bi-person-plus-fill"></i> REGISTER</h3>
+        </div>
+        <div class="card-body p-4">
+          <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label class="form-label"><b>Name</b></label>
+              <input type="text" formControlName="name" class="form-control" placeholder="Enter your name">
+              <div *ngIf="registrationForm.controls['name'].invalid && registrationForm.controls['name'].touched"
+                class="invalid-feedback d-block">
+                Name is required
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label"><b>Email</b></label>
+              <input type="email" formControlName="email" class="form-control" placeholder="Enter your email">
+              <div *ngIf="registrationForm.controls['email'].invalid && registrationForm.controls['email'].touched"
+                class="invalid-feedback d-block">
+                Valid email is required
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label"><b>Password</b></label>
+              <input type="password" formControlName="password" class="form-control" placeholder="Enter password">
+              <div *ngIf="registrationForm.controls['password'].invalid && registrationForm.controls['password'].touched"
+                class="invalid-feedback d-block">
+                Password is required
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label"><b>Confirm Password</b></label>
+              <input type="password" formControlName="confirmPassword" class="form-control" placeholder="Repeat your password">
+              <div *ngIf="registrationForm.hasError('mismatch') && registrationForm.controls['confirmPassword'].touched"
+                class="invalid-feedback d-block">
+                Passwords must match
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label"><b>Phone Number</b></label>
+              <input type="text" formControlName="phone" class="form-control" placeholder="Phone number">
+              <div *ngIf="registrationForm.controls['phone'].invalid && registrationForm.controls['phone'].touched"
+                class="invalid-feedback d-block">
+                Phone number is required
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label"><b>Role</b></label>
+              <select class="form-select" formControlName="role">
+                <option value="" disabled selected>Select role</option>
+                <option value="user">User</option>
+                <option value="organizer">Organizer</option>              </select>
+              <div *ngIf="registrationForm.controls['role'].invalid && registrationForm.controls['role'].touched"
+                class="invalid-feedback d-block">
+                Role is required
+              </div>
+            </div>
+            <div class="d-flex justify-content-center gap-3 mt-4">
+              <button type="submit" class="btn btn-success px-4" [disabled]="registrationForm.invalid">
+                <i class="bi bi-person-plus-fill me-2"></i>Register
+              </button>
+              <button type="reset" class="btn btn-secondary px-4" (click)="onReset()">
+                <i class="bi bi-x-circle me-2"></i>Reset
+              </button>
+            </div>
+            <div class="text-center mt-3">
+              <a routerLink="/login" class="btn btn-outline-dark">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Back to Login
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>

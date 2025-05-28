@@ -1,0 +1,66 @@
+
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="card-container max-width-450 margin-auto">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-dark text-white text-center py-3">
+                    <h3 class="mb-0"><i class="bi bi-lock-fill"></i>LOGIN</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-danger" id="loginError" role="alert" [style.display]="loginFailed ? 'block' : 'none'">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Invalid username or password!
+                    </div>
+
+                    <form id="loginForm" #loginForm="ngForm" (ngSubmit)="validate(loginForm)">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-dark text-white">
+                                <i class="bi bi-person-fill"></i>
+                            </span>
+                            <div class="form-floating">
+                                <input type="text" [(ngModel)]="username" name="username" class="form-control" id="username" placeholder="Enter username"
+                                    required #usernameInput="ngModel">
+                                <label for="username">Username</label>
+                                <div class="invalid-feedback" [style.display]="usernameInput.invalid && (usernameInput.dirty || usernameInput.touched) ? 'block' : 'none'">Please enter your username</div>
+                            </div>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-dark text-white">
+                                <i class="bi bi-key-fill"></i>
+                            </span>
+                            <div class="form-floating">
+                                <input type="password" [(ngModel)]="password" name="password" class="form-control" id="password" placeholder="Enter password"
+                                    required #passwordInput="ngModel">
+                                <label for="password">Password</label>
+                                <div class="invalid-feedback" [style.display]="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched) ? 'block' : 'none'">Please enter your password</div>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="rememberMe" [(ngModel)]="rememberMe" name="rememberMe">
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="submit" class="btn btn-dark btn-lg" [disabled]="loginForm.invalid">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <a routerLink="/registration" class="btn btn-outline-secondary">
+                                <i class="bi bi-person-plus-fill me-2"></i>Register New Account
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                <!-- <div class="card-footer text-center py-3 bg-light">
+                    <div class="small">
+                        <a href="#" class="text-decoration-none">Forgot password?</a>
+                    </div>
+                </div> -->
+            </div>
+        </div>
+    </div>
+</body>
