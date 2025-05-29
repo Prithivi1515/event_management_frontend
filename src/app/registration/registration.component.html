@@ -1,79 +1,139 @@
 <body class="bg-light">
-  <div class="container py-5">
-    <div class="card-container max-width-450 margin-auto">
-      <div class="card shadow-lg border-0 rounded-lg">
-        <div class="card-header bg-dark text-white text-center py-3">
-          <h3 class="mb-0"><i class="bi bi-person-plus-fill"></i> REGISTER</h3>
+    <div class="container py-5">
+        <div class="card-container max-width-450 margin-auto">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-dark text-white text-center py-3">
+                    <h3 class="mb-0"><i class="bi bi-person-plus-fill me-2"></i>REGISTER</h3>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Success Message -->
+                    <div class="alert alert-success" role="alert" [style.display]="successMessage ? 'block' : 'none'">
+                        <i class="bi bi-check-circle-fill me-2"></i>{{ successMessage }}
+                    </div>
+                    
+                    <!-- Error Message -->
+                    <div class="alert alert-danger" role="alert" [style.display]="errorMessage ? 'block' : 'none'">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMessage }}
+                    </div>
+
+                    <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+                        <!-- Name Field -->
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-dark text-white">
+                                <i class="bi bi-person-fill"></i>
+                            </span>
+                            <div class="form-floating">
+                                <input type="text" formControlName="name" class="form-control" 
+                                       id="name" placeholder="Enter your name">
+                                <label for="name">Full Name</label>
+                                <div class="invalid-feedback" 
+                                     [style.display]="registrationForm.get('name')?.invalid && registrationForm.get('name')?.touched ? 'block' : 'none'">
+                                    Name is required (minimum 2 characters)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email Field -->
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-dark text-white">
+                                <i class="bi bi-envelope-fill"></i>
+                            </span>
+                            <div class="form-floating">
+                                <input type="email" formControlName="email" class="form-control" 
+                                       id="email" placeholder="Enter your email">
+                                <label for="email">Email</label>
+                                <div class="invalid-feedback" 
+                                     [style.display]="registrationForm.get('email')?.invalid && registrationForm.get('email')?.touched ? 'block' : 'none'">
+                                    Valid email is required
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-dark text-white">
+                                <i class="bi bi-lock-fill"></i>
+                            </span>
+                            <div class="form-floating">
+                                <input type="password" formControlName="password" class="form-control" 
+                                       id="password" placeholder="Enter password">
+                                <label for="password">Password</label>
+                                <div class="invalid-feedback" 
+                                     [style.display]="registrationForm.get('password')?.invalid && registrationForm.get('password')?.touched ? 'block' : 'none'">
+                                    Password is required (minimum 6 characters)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password Field -->
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-dark text-white">
+                                <i class="bi bi-lock-fill"></i>
+                            </span>
+                            <div class="form-floating">
+                                <input type="password" formControlName="confirmPassword" class="form-control" 
+                                       id="confirmPassword" placeholder="Confirm password">
+                                <label for="confirmPassword">Confirm Password</label>
+                                <div class="invalid-feedback" 
+                                     [style.display]="registrationForm.hasError('mismatch') && registrationForm.get('confirmPassword')?.touched ? 'block' : 'none'">
+                                    Passwords must match
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Phone Field -->
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-dark text-white">
+                                <i class="bi bi-telephone-fill"></i>
+                            </span>
+                            <div class="form-floating">
+                                <input type="text" formControlName="phone" class="form-control" 
+                                       id="phone" placeholder="Enter phone number">
+                                <label for="phone">Phone Number</label>
+                                <div class="invalid-feedback" 
+                                     [style.display]="registrationForm.get('phone')?.invalid && registrationForm.get('phone')?.touched ? 'block' : 'none'">
+                                    Valid 10-digit phone number is required
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Role Field -->
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-dark text-white">
+                                <i class="bi bi-person-badge-fill"></i>
+                            </span>
+                            <div class="form-floating">
+                                <select formControlName="roles" class="form-select" id="roles">
+                                    <option value="" disabled>Select role</option>
+                                    <option value="user">User</option>
+                                    <option value="organizer">Organizer</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                                <label for="roles">Role</label>
+                                <div class="invalid-feedback" 
+                                     [style.display]="registrationForm.get('roles')?.invalid && registrationForm.get('roles')?.touched ? 'block' : 'none'">
+                                    Role is required
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="submit" class="btn btn-dark btn-lg" 
+                                    [disabled]="registrationForm.invalid || isLoading">
+                                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                                <i class="bi bi-person-plus-fill me-2" *ngIf="!isLoading"></i>
+                                {{ isLoading ? 'Registering...' : 'Register' }}
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <a routerLink="/login" class="btn btn-outline-secondary">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Back to Login
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="card-body p-4">
-          <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
-            <div class="mb-3">
-              <label class="form-label"><b>Name</b></label>
-              <input type="text" formControlName="name" class="form-control" placeholder="Enter your name">
-              <div *ngIf="registrationForm.controls['name'].invalid && registrationForm.controls['name'].touched"
-                class="invalid-feedback d-block">
-                Name is required
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label"><b>Email</b></label>
-              <input type="email" formControlName="email" class="form-control" placeholder="Enter your email">
-              <div *ngIf="registrationForm.controls['email'].invalid && registrationForm.controls['email'].touched"
-                class="invalid-feedback d-block">
-                Valid email is required
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label"><b>Password</b></label>
-              <input type="password" formControlName="password" class="form-control" placeholder="Enter password">
-              <div *ngIf="registrationForm.controls['password'].invalid && registrationForm.controls['password'].touched"
-                class="invalid-feedback d-block">
-                Password is required
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label"><b>Confirm Password</b></label>
-              <input type="password" formControlName="confirmPassword" class="form-control" placeholder="Repeat your password">
-              <div *ngIf="registrationForm.hasError('mismatch') && registrationForm.controls['confirmPassword'].touched"
-                class="invalid-feedback d-block">
-                Passwords must match
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label"><b>Phone Number</b></label>
-              <input type="text" formControlName="phone" class="form-control" placeholder="Phone number">
-              <div *ngIf="registrationForm.controls['phone'].invalid && registrationForm.controls['phone'].touched"
-                class="invalid-feedback d-block">
-                Phone number is required
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label"><b>Role</b></label>
-              <select class="form-select" formControlName="role">
-                <option value="" disabled selected>Select role</option>
-                <option value="user">User</option>
-                <option value="organizer">Organizer</option>              </select>
-              <div *ngIf="registrationForm.controls['role'].invalid && registrationForm.controls['role'].touched"
-                class="invalid-feedback d-block">
-                Role is required
-              </div>
-            </div>
-            <div class="d-flex justify-content-center gap-3 mt-4">
-              <button type="submit" class="btn btn-success px-4" [disabled]="registrationForm.invalid">
-                <i class="bi bi-person-plus-fill me-2"></i>Register
-              </button>
-              <button type="reset" class="btn btn-secondary px-4" (click)="onReset()">
-                <i class="bi bi-x-circle me-2"></i>Reset
-              </button>
-            </div>
-            <div class="text-center mt-3">
-              <a routerLink="/login" class="btn btn-outline-dark">
-                <i class="bi bi-box-arrow-in-right me-2"></i>Back to Login
-              </a>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
-  </div>
 </body>

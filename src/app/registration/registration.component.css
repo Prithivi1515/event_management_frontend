@@ -1,28 +1,113 @@
-.alert-custom {
-    max-width: 300px;
-    /* Adjust the width as needed */
+.card-container {
+    max-width: 450px;
     margin: auto;
-    /* Center the alert */
-    height: 30px;
-    /* Adjust the height as needed */
-    display: flex;
-    align-items: center;
-    /* Center content vertically */
-  }
-   
-  .input-small {
-    max-width: 300px;
-    /* Adjust the width as needed */
-  }
-   
-  .form-check-inline {
-    margin-right: 50px;
-  }
+}
 
-  .max-width-450 {
-    max-width: 500px;
-  }
-  .margin-auto {
+.max-width-450 {
+    max-width: 450px;
+}
+
+.margin-auto {
     margin-left: auto;
     margin-right: auto;
-  }
+}
+
+/* Light theme to match login page */
+body {
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+.card {
+    border-radius: 1rem;
+    background: #fff !important;
+    color: #000;
+}
+
+.card-header {
+    border-radius: 1rem 1rem 0 0;
+    background: #212529 !important;
+}
+
+/* Form controls - light theme */
+.form-control,
+.form-control:focus,
+.form-select,
+.form-select:focus {
+    background: #fff;
+    color: #000;
+    border: 1px solid #ced4da;
+}
+
+.form-floating > label {
+    color: #6c757d !important;
+}
+
+.input-group-text {
+    background: #212529;
+    color: #fff;
+    border: 1px solid #ced4da;
+}
+
+/* Button styling to match login */
+.btn-dark {
+    background: #212529;
+    border-color: #212529;
+}
+
+.btn-dark:hover {
+    background: #1c1f23;
+    border-color: #1a1e21;
+}
+
+.btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: #fff;
+}
+
+/* Alert styling - hidden by default, shown via style binding */
+.alert {
+    display: none;
+}
+
+/* Form validation styling */
+.form-control:invalid {
+    border-color: #dc3545;
+}
+
+.form-control:valid {
+    border-color: #198754;
+}
+
+/* Button styling */
+.btn-dark:disabled {
+    opacity: 0.6;
+}
+
+/* Spinner animation */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Remove dark theme overrides */
+.alert-custom {
+    max-width: 300px;
+    margin: auto;
+    height: 30px;
+    display: flex;
+    align-items: center;
+}
+
+.input-small {
+    max-width: 300px;
+}
+
+.form-check-inline {
+    margin-right: 50px;
+}
