@@ -5,34 +5,8 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient, HttpClientModule, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
-interface Event {
-  id?: number;
-  eventId?: number;
-  name: string;
-  category: string;
-  location: string;
-  date: string;
-  organizerId: number;
-  ticketCount: number;
-  ticketPrice: number; // Changed from price to ticketPrice to match backend
-  description?: string;
-  time?: string;
-  venue?: string;
-  availableSeats?: number;
-  imageUrl?: string;
-}
-
-interface BookingRequest {
-  eventId: number;
-  userId: number;
-}
-
-interface BookingResponse {
-  bookingId: number;
-  message: string;
-  status: string;
-  ticketDetails?: any;
-}
+// Import the TicketService types
+import { TicketService, BookingRequest, Event } from '../services/ticket.service';
 
 @Component({
   selector: 'app-ticket-booking',
@@ -55,14 +29,13 @@ export class TicketBookingComponent implements OnInit, OnDestroy {
   Math = Math;
 
   private subscriptions: Subscription[] = [];
-  private baseEventUrl = 'http://localhost:9090/event';
-  private bookingUrl = 'http://localhost:9090/ticket/book';
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private route: ActivatedRoute,
-    private http: HttpClient
+    private http: HttpClient,
+    private ticketService: TicketService // Inject the TicketService
   ) {
     this.initializeForm();
   }
@@ -209,18 +182,6 @@ export class TicketBookingComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getAuthHeaders(): HttpHeaders {
-    const token = this.getJwtToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    });
-  }
-
   private initializeForm(): void {
     this.bookingForm = this.fb.group({
       numberOfTickets: [1, [
@@ -257,38 +218,26 @@ export class TicketBookingComponent implements OnInit, OnDestroy {
   }
 
   private loadEventDetails(): void {
-    this.loading = true;
-    
     console.log(`Loading event details for ID: ${this.eventId}`);
     
-    // Fixed: Add JWT token to the GET request
-    try {
-      const headers = this.getAuthHeaders();
-      console.log('Loading event with auth headers');
-      
-      const eventSubscription = this.http.get<Event>(`${this.baseEventUrl}/getEventById/${this.eventId}`, { headers })
-        .subscribe({
-          next: (event: Event) => {
-            console.log('Event details loaded:', event);
-            this.event = this.enhanceEventData(event);
-            this.loading = false;
-            
-            this.bookingForm.get('numberOfTickets')?.updateValueAndValidity();
-          },
-          error: (error: HttpErrorResponse) => {
-            console.error('Error loading event:', error);
-            this.loading = false;
-            this.handleEventLoadError(error);
-          }
-        });
+    // Use TicketService to load event details
+    const eventSubscription = this.ticketService.loadEventForBooking(this.eventId).subscribe({
+      next: (event: Event) => {
+        console.log('Event details loaded:', event);
+        this.event = event;
+        this.loading = false;
+        
+        // Update form validator with new event data
+        this.bookingForm.get('numberOfTickets')?.updateValueAndValidity();
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Error loading event:', error);
+        this.loading = false;
+        this.handleEventLoadError(error);
+      }
+    });
 
-      this.subscriptions.push(eventSubscription);
-    } catch (error) {
-      console.error('Error preparing auth headers for event load:', error);
-      this.loading = false;
-      this.showErrorMessage('Authentication error. Please login again.');
-      this.redirectToLogin();
-    }
+    this.subscriptions.push(eventSubscription);
   }
 
   private handleEventLoadError(error: HttpErrorResponse): void {
@@ -317,92 +266,6 @@ export class TicketBookingComponent implements OnInit, OnDestroy {
     this.router.navigate(['/events']);
   }
 
-  private enhanceEventData(event: Event): Event {
-    return {
-      ...event,
-      eventId: event.eventId || event.id || this.eventId,
-      ticketPrice: event.ticketPrice || 1, // Use backend price, fallback to minimum
-      description: this.generateDescription(event),
-      time: this.extractTime(event.date),
-      venue: this.generateVenue(event),
-      availableSeats: this.calculateAvailableSeats(event.ticketCount),
-      imageUrl: this.getEventImage(event.category)
-    };
-  }
-
-  private generateDescription(event: Event): string {
-    const descriptions = {
-      sports: `Join us for an exciting ${event.name} in ${event.location}. Experience the thrill and excitement with fellow sports enthusiasts.`,
-      entertainment: `Don't miss this amazing ${event.name} entertainment event in ${event.location}. A night full of fun and excitement awaits you.`,
-      business: `Attend the ${event.name} business event in ${event.location}. Network with professionals and gain valuable insights.`,
-      education: `Enhance your knowledge at the ${event.name} educational event in ${event.location}. Learn from industry experts.`,
-      technology: `Join the ${event.name} technology event in ${event.location}. Stay updated with the latest tech trends.`,
-      arts: `Experience the ${event.name} arts event in ${event.location}. Immerse yourself in creativity and culture.`,
-      food: `Savor the ${event.name} food event in ${event.location}. A culinary journey awaits you.`,
-      health: `Participate in the ${event.name} health event in ${event.location}. Focus on wellness and healthy living.`,
-      default: `Join us for ${event.name} in ${event.location}. An exciting event you don't want to miss!`
-    };
-    
-    return descriptions[event.category.toLowerCase() as keyof typeof descriptions] || descriptions.default;
-  }
-
-  private extractTime(dateString: string): string {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return 'Time TBA';
-      }
-      
-      return date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      });
-    } catch (error) {
-      console.error('Error extracting time:', error);
-      return 'Time TBA';
-    }
-  }
-
-  private generateVenue(event: Event): string {
-    const venues = {
-      sports: `${event.location} Sports Complex`,
-      entertainment: `${event.location} Entertainment Center`,
-      business: `${event.location} Convention Center`,
-      education: `${event.location} Conference Hall`,
-      technology: `${event.location} Tech Hub`,
-      arts: `${event.location} Arts Center`,
-      food: `${event.location} Food Court`,
-      health: `${event.location} Wellness Center`,
-      default: `${event.location} Event Center`
-    };
-    
-    return venues[event.category.toLowerCase() as keyof typeof venues] || venues.default;
-  }
-
-  private calculateAvailableSeats(totalSeats: number): number {
-    const soldPercentage = Math.random() * 0.6 + 0.2;
-    const availableSeats = Math.floor(totalSeats * (1 - soldPercentage));
-    
-    return Math.max(availableSeats, Math.min(10, Math.floor(totalSeats * 0.1)));
-  }
-
-  private getEventImage(category: string): string {
-    const images = {
-      sports: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop',
-      entertainment: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop',
-      business: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=250&fit=crop',
-      education: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=400&h=250&fit=crop',
-      technology: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop',
-      arts: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=250&fit=crop',
-      food: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=250&fit=crop',
-      health: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop',
-      default: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=250&fit=crop'
-    };
-    
-    return images[category.toLowerCase() as keyof typeof images] || images.default;
-  }
-
   onSubmit(): void {
     console.log('Form submission started');
     console.log('Form valid:', this.bookingForm.valid);
@@ -422,44 +285,37 @@ export class TicketBookingComponent implements OnInit, OnDestroy {
 
     this.submitting = true;
 
+    // Get the quantity from the form
+    const quantity = this.bookingForm.get('numberOfTickets')?.value || 1;
+    
+    // Create booking request with quantity
     const bookingRequest: BookingRequest = {
       eventId: this.event.eventId || this.event.id || this.eventId,
-      userId: this.currentUserId
+      userId: this.currentUserId,
+      quantity: quantity // Include quantity in the request
     };
 
-    console.log('Submitting booking request:', bookingRequest);
+    console.log('Submitting booking request with quantity:', bookingRequest);
 
-    try {
-      const headers = this.getAuthHeaders();
-      console.log('Request headers prepared');
+    // Use TicketService to book the ticket
+    const bookingSubscription = this.ticketService.bookTicket(bookingRequest).subscribe({
+      next: (response) => {
+        console.log('Booking successful:', response);
+        this.submitting = false;
+        this.handleBookingSuccess(response.message);
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Booking failed:', error);
+        this.submitting = false;
+        this.handleBookingError(error);
+      }
+    });
 
-      const bookingSubscription = this.http.post(this.bookingUrl, bookingRequest, { 
-        headers,
-        responseType: 'text'
-      })
-        .subscribe({
-          next: (response: string) => {
-            console.log('Booking successful:', response);
-            this.submitting = false;
-            this.handleBookingSuccess(response);
-          },
-          error: (error: HttpErrorResponse) => {
-            console.error('Booking failed:', error);
-            this.submitting = false;
-            this.handleBookingError(error);
-          }
-        });
-
-      this.subscriptions.push(bookingSubscription);
-    } catch (error) {
-      console.error('Error preparing booking request:', error);
-      this.submitting = false;
-      this.showErrorMessage('Failed to prepare booking request. Please try logging in again.');
-    }
+    this.subscriptions.push(bookingSubscription);
   }
 
-  private handleBookingSuccess(response: string): void {
-    const successMessage = response || 'Ticket booked successfully!';
+  private handleBookingSuccess(message: string): void {
+    const successMessage = message || 'Ticket booked successfully!';
     this.showSuccessMessage(successMessage);
     
     setTimeout(() => {
@@ -666,5 +522,23 @@ export class TicketBookingComponent implements OnInit, OnDestroy {
     if (price < 500) return 'price-low';
     if (price < 1500) return 'price-medium';
     return 'price-high';
+  }
+
+  extractTime(dateString: string): string {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Time TBA';
+      }
+      
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+    } catch (error) {
+      console.error('Error extracting time:', error);
+      return 'Time TBA';
+    }
   }
 }

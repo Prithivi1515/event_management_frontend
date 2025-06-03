@@ -9,7 +9,7 @@ import { UserService, User, UserUpdateRequest } from '../services/user.service';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, HttpClientModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })

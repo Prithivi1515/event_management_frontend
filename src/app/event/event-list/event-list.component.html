@@ -176,78 +176,6 @@
                 </div>
               </div>
             </div>
-            
-            <!-- Enhanced Active Filters Display -->
-            <div class="active-filters" *ngIf="hasActiveFilters()">
-              <div class="active-filters-header">
-                <h6 class="active-filters-title">
-                  <i class="bi bi-funnel-fill" aria-hidden="true"></i>
-                  Active Filters ({{ getActiveFiltersCount() }})
-                </h6>
-              </div>
-              
-              <div class="filter-badges-container">
-                <!-- Search Filter Badge -->
-                <span class="filter-badge filter-badge-search" *ngIf="searchTerm">
-                  <span>
-                    <i class="bi bi-search me-1" aria-hidden="true"></i>
-                    "{{ searchTerm }}"
-                  </span>
-                  <button 
-                    type="button" 
-                    class="btn-close btn-close-white" 
-                    (click)="searchTerm = ''; onSearchInput('')" 
-                    aria-label="Remove search filter"
-                    title="Remove search filter">
-                  </button>
-                </span>
-                
-                <!-- Category Filter Badge -->
-                <span class="filter-badge filter-badge-category" *ngIf="selectedCategory">
-                  <span>
-                    <i class="bi bi-tag me-1" aria-hidden="true"></i>
-                    {{ selectedCategory | titlecase }}
-                  </span>
-                  <button 
-                    type="button" 
-                    class="btn-close btn-close-white" 
-                    (click)="selectedCategory = ''; onCategoryChange()" 
-                    aria-label="Remove category filter"
-                    title="Remove category filter">
-                  </button>
-                </span>
-                
-                <!-- Location Filter Badge -->
-                <span class="filter-badge filter-badge-location" *ngIf="selectedLocation">
-                  <span>
-                    <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>
-                    {{ selectedLocation }}
-                  </span>
-                  <button 
-                    type="button" 
-                    class="btn-close btn-close-white" 
-                    (click)="selectedLocation = ''; onLocationChange()" 
-                    aria-label="Remove location filter"
-                    title="Remove location filter">
-                  </button>
-                </span>
-                
-                <!-- Date Filter Badge -->
-                <span class="filter-badge filter-badge-date" *ngIf="selectedDateRange">
-                  <span>
-                    <i class="bi bi-calendar me-1" aria-hidden="true"></i>
-                    {{ getDateRangeLabel(selectedDateRange) }}
-                  </span>
-                  <button 
-                    type="button" 
-                    class="btn-close" 
-                    (click)="selectedDateRange = ''; onDateRangeChange()" 
-                    aria-label="Remove date filter"
-                    title="Remove date filter">
-                  </button>
-                </span>
-              </div>
-            </div>
           </form>
         </div>
       </div>
@@ -268,15 +196,10 @@
             <span *ngIf="selectedLocation"> in {{ selectedLocation }}</span>
           </p>
           <small class="text-muted">
-            Showing upcoming events only
             <span *ngIf="currentPage > 1"> • Page {{ currentPage }} of {{ totalPages }}</span>
           </small>
         </div>
         <div class="d-flex gap-2">
-          <!-- Debug button (remove in production) -->
-          <button class="btn btn-sm btn-outline-info" (click)="debugFilters()" title="Debug filters">
-            <i class="bi bi-bug"></i>
-          </button>
           <button class="btn btn-sm btn-outline-primary" (click)="refreshEvents()" [disabled]="isLoading" title="Refresh events">
             <i class="bi bi-arrow-clockwise"></i>
           </button>

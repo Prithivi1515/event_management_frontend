@@ -31,7 +31,7 @@ export class RegistrationComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', Validators.required],
-      phone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+      contactNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
       roles: ['', Validators.required] // Changed from 'role' to 'roles'
     }, { validator: this.passwordMatchValidator.bind(this) });
   }
@@ -52,7 +52,7 @@ export class RegistrationComponent implements OnInit {
         name: this.registrationForm.value.name,
         email: this.registrationForm.value.email,
         password: this.registrationForm.value.password,
-        phone: this.registrationForm.value.phone,
+        contactNumber: this.registrationForm.value.contactNumber,
         roles: this.registrationForm.value.roles
       };
 

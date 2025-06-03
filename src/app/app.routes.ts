@@ -21,8 +21,6 @@ export const routes: Routes = [
     {path: 'feedback', component: FeedbackComponent},
     {path: 'profile', component: ProfileComponent},
     { path: 'feedback-list', component: FeedbackListComponent }, // Fallback route
-    { path: 'feedback-list/event/:eventId', component: FeedbackListComponent },
-    { path: 'feedback-list/organizer', component: FeedbackListComponent },
-    { path: 'feedback-list/user', component: FeedbackListComponent },
+    { path: 'feedback-list/event/:eventId', component: FeedbackListComponent }
     
 ];

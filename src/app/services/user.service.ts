@@ -119,32 +119,58 @@ export class UserService {
     return 0;
   }
 
-  // Get current user roles from token or localStorage
+  // Store roles when user logs in
+  setUserRoles(roles: string): void {
+    localStorage.setItem('userRoles', roles.toLowerCase());
+  }
+
+  // Get current user roles with better fallback logic
   getCurrentUserRoles(): string {
     // Try localStorage first
-    const storedRoles = localStorage.getItem('userRoles');
+    const storedRoles = localStorage.getItem('userRoles') || localStorage.getItem('userRole');
     if (storedRoles) {
-      return storedRoles;
+      return storedRoles.toLowerCase();
     }
 
     // Try extracting from JWT token
     const token = this.getJwtToken();
-    if (!token) return 'user'; // Default role (lowercase)
+    if (!token) return 'user'; // Default role
 
     try {
       const payload = this.decodeJwtToken(token);
-      const roleFields = ['roles', 'role', 'authorities', 'scope'];
+      
+      // Try different role field names
+      const roleFields = ['roles', 'role', 'authorities', 'scope', 'userRole'];
       
       for (const field of roleFields) {
         const value = payload[field];
         if (value) {
+          let roles = '';
+          
           // Handle array of roles
           if (Array.isArray(value)) {
-            return value.join(',').toLowerCase();
-          }
+            roles = value.map(r => {
+              if (typeof r === 'string') {
+                return r.startsWith('ROLE_') ? r.substring(5) : r;
+              }
+              return r.authority ? r.authority.replace('ROLE_', '') : r;
+            }).join(',').toLowerCase();
+          } 
           // Handle string roles
-          if (typeof value === 'string') {
-            return value.toLowerCase();
+          else if (typeof value === 'string') {
+            roles = value.startsWith('ROLE_') ? value.substring(5).toLowerCase() : value.toLowerCase();
+          }
+          // Handle object with authority
+          else if (value.authority) {
+            roles = value.authority.startsWith('ROLE_') ? 
+                    value.authority.substring(5).toLowerCase() : 
+                    value.authority.toLowerCase();
+          }
+
+          if (roles) {
+            // Store for future use
+            localStorage.setItem('userRoles', roles);
+            return roles;
           }
         }
       }
@@ -152,13 +178,29 @@ export class UserService {
       console.error('Error extracting roles from JWT:', error);
     }
 
-    return 'user'; // Default role (lowercase)
+    return 'user'; // Default role
   }
 
   // Check if user is an organizer or admin
   isOrganizer(): boolean {
     const roles = this.getCurrentUserRoles().toLowerCase();
     return roles.includes('organizer') || roles.includes('admin');
+  }
+
+  // Check if user is regular user (not organizer)
+  isRegularUser(): boolean {
+    const roles = this.getCurrentUserRoles().toLowerCase();
+    return roles.includes('user') && !this.isOrganizer();
+  }
+
+  // Check if user should see bookings
+  canViewBookings(): boolean {
+    return this.isAuthenticated() && !this.isOrganizer();
+  }
+
+  // Check if user should see events management
+  canManageEvents(): boolean {
+    return this.isAuthenticated() && this.isOrganizer();
   }
 
   // Check if user is admin

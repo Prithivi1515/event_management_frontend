@@ -5,13 +5,27 @@
 >
     <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark opacity-75"></div>
     <div class="position-relative z-1 text-white">
-        <h1 class="display-2 fw-bold mb-3 animate__animated animate__fadeInDown">Welcome to EMS</h1>
-        <p class="lead mb-4 animate__animated animate__fadeInUp">Simplify your event planning, ticketing, and engagement.</p>
+        <!-- Welcome message for logged in users -->
+        <div *ngIf="isLoggedIn" class="mb-4">
+            <h1 class="display-3 fw-bold mb-2 animate__animated animate__fadeInDown">
+                Welcome back, {{ getDisplayName() }}!
+            </h1>
+        </div>
+
+        <!-- Welcome message for guests -->
+        <div *ngIf="!isLoggedIn">
+            <h1 class="display-2 fw-bold mb-3 animate__animated animate__fadeInDown">Welcome to EMS</h1>
+            <p class="lead mb-4 animate__animated animate__fadeInUp">Simplify your event planning, ticketing, and engagement.</p>
+        </div>
+
+        <!-- Action buttons based on authentication status -->
         <div class="d-flex justify-content-center gap-3 animate__animated animate__fadeInUp">
+            <!-- Always show Browse Events button -->
             <a routerLink="/events" class="btn btn-primary btn-lg px-4 shadow">
                 <i class="bi bi-calendar2-week me-2"></i>Browse Events
             </a>
-            <a routerLink="/login" class="btn btn-outline-light btn-lg px-4 shadow">
+            <!-- For logged out users -->
+            <a *ngIf="!isLoggedIn" routerLink="/login" class="btn btn-outline-light btn-lg px-4 shadow">
                 <i class="bi bi-box-arrow-in-right me-2"></i>Login
             </a>
         </div>
@@ -57,11 +71,34 @@
 <!-- Call to Action Section -->
 <section class="py-5 bg-primary text-white text-center">
     <div class="container">
-        <h2 class="fw-bold mb-3">Ready to create your next amazing event?</h2>
-        <p class="lead mb-4">Join thousands of organizers and attendees using EMS for seamless event experiences.</p>
-        <a routerLink="/registration" class="btn btn-light btn-lg px-5 shadow">
-            <i class="bi bi-person-plus me-2"></i>Get Started Free
-        </a>
+        <!-- Different CTA based on authentication status -->
+        
+        <!-- For logged out users -->
+        <div *ngIf="!isLoggedIn">
+            <h2 class="fw-bold mb-3">Ready to create your next amazing event?</h2>
+            <p class="lead mb-4">Join thousands of organizers and attendees using EMS for seamless event experiences.</p>
+            <a routerLink="/registration" class="btn btn-light btn-lg px-5 shadow">
+                <i class="bi bi-person-plus me-2"></i>Get Started Free
+            </a>
+        </div>
+
+        <!-- For logged in organizers -->
+        <div *ngIf="isLoggedIn && isOrganizer()">
+            <h2 class="fw-bold mb-3">Ready to create your next event?</h2>
+            <p class="lead mb-4">Start planning and engaging with your audience today.</p>
+            <a routerLink="/my-events" class="btn btn-light btn-lg px-5 shadow">
+                <i class="bi bi-calendar-plus me-2"></i>Create New Event
+            </a>
+        </div>
+
+        <!-- For logged in regular users -->
+        <div *ngIf="isLoggedIn && isRegularUser()">
+            <h2 class="fw-bold mb-3">Discover amazing events near you!</h2>
+            <p class="lead mb-4">Browse and book tickets for exciting events in your area.</p>
+            <a routerLink="/events" class="btn btn-light btn-lg px-5 shadow">
+                <i class="bi bi-search me-2"></i>Find Events
+            </a>
+        </div>
     </div>
 </section>
 

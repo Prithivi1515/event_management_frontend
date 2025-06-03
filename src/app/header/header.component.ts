@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { NgIf, TitleCasePipe } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-header',
@@ -15,12 +16,15 @@ export class HeaderComponent implements OnInit {
   isLoggedIn = false;
   username = '';
   userEmail = '';
-  userRole = ''; // Added user role property
+  userRole = '';
   searchTerm = '';
   selectedLocation = '';
   isSearching = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private userService: UserService
+  ) {}
 
   ngOnInit() {
     this.checkLogin();
@@ -28,101 +32,65 @@ export class HeaderComponent implements OnInit {
   }
 
   checkLogin() {
-    const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
-    const storedUsername = localStorage.getItem('username');
-    const storedEmail = localStorage.getItem('userEmail');
-    const storedRole = localStorage.getItem('userRole');
+    // Use UserService to check authentication
+    this.isLoggedIn = this.userService.isAuthenticated();
     
-    this.isLoggedIn = !!token;
-    this.username = storedUsername || '';
-    this.userEmail = storedEmail || '';
-    this.userRole = storedRole || '';
-
-    // If role is not in localStorage, try to decode from JWT token
-    if (!this.userRole && token) {
-      this.userRole = this.extractRoleFromToken(token);
-      // Save extracted role to localStorage for future use
+    if (this.isLoggedIn) {
+      // Get user data from localStorage and JWT
+      this.username = localStorage.getItem('username') || '';
+      this.userEmail = localStorage.getItem('userEmail') || '';
+      
+      // Use UserService to get roles
+      this.userRole = this.userService.getCurrentUserRoles();
+      
+      // Store role in localStorage for consistency
       if (this.userRole) {
         localStorage.setItem('userRole', this.userRole);
       }
+    } else {
+      // Clear user data if not authenticated
+      this.username = '';
+      this.userEmail = '';
+      this.userRole = '';
     }
 
     console.log('Header - User role:', this.userRole);
     console.log('Header - isOrganizer():', this.isOrganizer());
     
-    // Call debug method (remove after fixing)
+    // Debug info for troubleshooting
     if (this.isLoggedIn) {
       this.debugUserRole();
     }
   }
 
-  // Method to extract role from JWT token
-  private extractRoleFromToken(token: string): string {
-    try {
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        return '';
-      }
-      
-      let payload = parts[1];
-      payload = payload.replace(/-/g, '+').replace(/_/g, '/');
-      
-      switch (payload.length % 4) {
-        case 2: payload += '=='; break;
-        case 3: payload += '='; break;
-      }
-      
-      const decoded = JSON.parse(atob(payload));
-      console.log('Decoded JWT payload:', decoded);
-      
-      // Try different possible role fields in order of preference
-      const roleFields = ['role', 'userRole', 'authorities', 'scope', 'roles', 'authority'];
-      
-      for (const field of roleFields) {
-        if (decoded[field]) {
-          let role = decoded[field];
-          console.log(`Found role in field '${field}':`, role);
-          
-          // Handle array of roles
-          if (Array.isArray(role)) {
-            role = role[0];
-            console.log('Extracted first role from array:', role);
-          }
-          
-          // Handle object with role property
-          if (typeof role === 'object' && role.authority) {
-            role = role.authority;
-          }
-          
-          // Extract role from authority format (e.g., "ROLE_ORGANIZER" -> "organizer")
-          if (typeof role === 'string') {
-            if (role.startsWith('ROLE_')) {
-              role = role.substring(5).toLowerCase();
-            } else {
-              role = role.toLowerCase();
-            }
-            console.log('Final processed role:', role);
-            return role;
-          }
-        }
-      }
-      
-      console.log('No role found in token');
-      return '';
-    } catch (error) {
-      console.error('Error extracting role from token:', error);
-      return '';
-    }
-  }
-
-  // Method to check if user is an organizer
+  // Check if user is an organizer using UserService
   isOrganizer(): boolean {
-    return this.userRole.toLowerCase() === 'organizer';
+    return this.userService.isOrganizer();
   }
 
-  // Method to check if user is a regular user
+  // Check if user is a regular user (not organizer)
   isUser(): boolean {
-    return this.userRole.toLowerCase() === 'user';
+    return this.isLoggedIn && !this.isOrganizer();
+  }
+
+  // Show My Bookings only for regular users (not organizers)
+  shouldShowBookings(): boolean {
+    return this.isLoggedIn && this.isUser();
+  }
+
+  // Show My Events only for organizers
+  shouldShowMyEvents(): boolean {
+    return this.isLoggedIn && this.isOrganizer();
+  }
+
+  // Get role display name
+  getRoleDisplayName(): string {
+    if (this.isOrganizer()) {
+      return 'Event Organizer';
+    } else if (this.isUser()) {
+      return 'Event Attendee';
+    }
+    return 'User';
   }
 
   logout(event: Event) {
@@ -133,9 +101,10 @@ export class HeaderComponent implements OnInit {
     sessionStorage.removeItem('jwtToken');
     localStorage.removeItem('username');
     localStorage.removeItem('userEmail');
-    localStorage.removeItem('userRole'); // Clear user role
+    localStorage.removeItem('userRole');
     localStorage.removeItem('userId');
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRoles'); // Clear roles from UserService
     
     // Update component state
     this.isLoggedIn = false;
@@ -204,26 +173,49 @@ export class HeaderComponent implements OnInit {
     }
   }
 
-  // Add this method for debugging (remove after fixing)
+  // Navigation helpers
+  navigateToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  navigateToMyEvents(): void {
+    if (this.shouldShowMyEvents()) {
+      this.router.navigate(['/my-events']);
+    }
+  }
+
+  navigateToMyBookings(): void {
+    if (this.shouldShowBookings()) {
+      this.router.navigate(['/ticket-history']);
+    }
+  }
+
+  // Debug method for troubleshooting
   debugUserRole(): void {
-    console.log('=== DEBUGGING USER ROLE ===');
-    console.log('userRole from component:', this.userRole);
-    console.log('userRole from localStorage:', localStorage.getItem('userRole'));
-    console.log('isOrganizer():', this.isOrganizer());
+    console.log('=== USER ROLE DEBUG ===');
+    console.log('isLoggedIn:', this.isLoggedIn);
+    console.log('userRole (component):', this.userRole);
+    console.log('userRole (localStorage):', localStorage.getItem('userRole'));
+    console.log('userRoles (UserService):', this.userService.getCurrentUserRoles());
+    console.log('isOrganizer (UserService):', this.userService.isOrganizer());
+    console.log('isOrganizer (component):', this.isOrganizer());
+    console.log('shouldShowBookings():', this.shouldShowBookings());
+    console.log('shouldShowMyEvents():', this.shouldShowMyEvents());
     console.log('isUser():', this.isUser());
     
     const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
     if (token) {
-      console.log('JWT Token exists');
       try {
         const payload = this.decodeJwtForDebug(token);
-        console.log('Full JWT payload:', payload);
-        console.log('Role extraction result:', this.extractRoleFromToken(token));
+        console.log('JWT payload roles-related fields:', {
+          role: payload.role,
+          roles: payload.roles,
+          authorities: payload.authorities,
+          scope: payload.scope
+        });
       } catch (error) {
         console.error('Error decoding token:', error);
       }
-    } else {
-      console.log('No JWT token found');
     }
     console.log('=== END DEBUG ===');
   }

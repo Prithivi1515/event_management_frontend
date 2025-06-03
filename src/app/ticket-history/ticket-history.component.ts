@@ -41,7 +41,7 @@ interface CancelResponse {
 @Component({
   selector: 'app-ticket-history',
   standalone: true,
-  imports: [CommonModule, RouterLink, HttpClientModule],
+  imports: [CommonModule, HttpClientModule],
   templateUrl: './ticket-history.component.html',
   styleUrl: './ticket-history.component.css'
 })

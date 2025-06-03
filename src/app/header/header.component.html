@@ -114,16 +114,20 @@
               </div>
             </li>
             <li><hr class="dropdown-divider my-0"></li>
-            <li><a class="dropdown-item dropdown-item-enhanced" routerLink="/profile">
-              <i class="bi bi-person me-3"></i>
-              <div>
-                <div>My Profile</div>
-                <small class="text-muted">View and edit profile</small>
-              </div>
-            </a></li>
             
-            <!-- Fixed: Show "My Events" only for organizers -->
-            <li *ngIf="isOrganizer()">
+            <!-- Profile option for all users -->
+            <li>
+              <a class="dropdown-item dropdown-item-enhanced" routerLink="/profile">
+                <i class="bi bi-person me-3"></i>
+                <div>
+                  <div>My Profile</div>
+                  <small class="text-muted">View and edit profile</small>
+                </div>
+              </a>
+            </li>
+            
+            <!-- Show "My Events" only for organizers -->
+            <li *ngIf="shouldShowMyEvents()">
               <a class="dropdown-item dropdown-item-enhanced" routerLink="/my-events">
                 <i class="bi bi-calendar-check me-3"></i>
                 <div>
@@ -133,24 +137,41 @@
               </a>
             </li>
             
-            <!-- Show "My Bookings" for all authenticated users -->
-            <li><a class="dropdown-item dropdown-item-enhanced" routerLink="/my-bookings">
-              <i class="bi bi-ticket-perforated me-3"></i>
-              <div>
-                <div>My Bookings</div>
-                <small class="text-muted">View my tickets</small>
-              </div>
-            </a></li>
+            <li *ngIf="shouldShowBookings()">
+              <a class="dropdown-item dropdown-item-enhanced" routerLink="/my-bookings">
+                <i class="bi bi-ticket-perforated me-3"></i>
+                <div>
+                  <div>My Bookings</div>
+                  <small class="text-muted">View my tickets</small>
+                </div>
+              </a>
+            </li>
             
             <li><hr class="dropdown-divider my-1"></li>
-            <li><a class="dropdown-item dropdown-item-enhanced logout-item text-danger" 
-                   href="#" (click)="logout($event)">
-              <i class="bi bi-box-arrow-right me-3"></i>
-              <div>
-                <div>Logout</div>
-                <small class="text-muted">Sign out of your account</small>
-              </div>
-            </a></li>
+            
+            <!-- Debug option (can be enabled for troubleshooting) -->
+            <li *ngIf="false"> <!-- Change to true for debugging -->
+              <a class="dropdown-item dropdown-item-enhanced text-info" 
+                 href="#" (click)="debugUserRole(); $event.preventDefault()">
+                <i class="bi bi-bug me-3"></i>
+                <div>
+                  <div>Debug Info</div>
+                  <small class="text-muted">Role: {{ userRole || 'none' }}</small>
+                </div>
+              </a>
+            </li>
+            
+            <!-- Logout option -->
+            <li>
+              <a class="dropdown-item dropdown-item-enhanced logout-item text-danger" 
+                 href="#" (click)="logout($event)">
+                <i class="bi bi-box-arrow-right me-3"></i>
+                <div>
+                  <div>Logout</div>
+                  <small class="text-muted">Sign out of your account</small>
+                </div>
+              </a>
+            </li>
           </ul>
         </div>
       </div>

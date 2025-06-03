@@ -98,10 +98,6 @@
                       <div class="fw-medium">{{ ticket.quantity }} ticket(s)</div>
                     </div>
                     <div class="col-6">
-                      <small class="text-muted">Total Amount:</small>
-                      <div class="fw-bold text-success">{{ formatPrice(ticket.totalAmount) }}</div>
-                    </div>
-                    <div class="col-6">
                       <small class="text-muted">Booked On:</small>
                       <div class="fw-medium">{{ formatDate(ticket.bookingDate) }}</div>
                     </div>
@@ -215,9 +211,6 @@
                 {{ getConfirmedTicketsCount() }} confirmed • 
                 {{ getCancelledTicketsCount() }} cancelled
               </p>
-              <small>
-                Total amount for confirmed tickets: {{ formatPrice(getTotalAmount()) }}
-              </small>
             </div>
           </div>
         </div>

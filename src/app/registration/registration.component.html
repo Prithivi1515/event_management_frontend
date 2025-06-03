@@ -87,12 +87,12 @@
                                 <i class="bi bi-telephone-fill"></i>
                             </span>
                             <div class="form-floating">
-                                <input type="text" formControlName="phone" class="form-control" 
-                                       id="phone" placeholder="Enter phone number">
-                                <label for="phone">Phone Number</label>
+                                <input type="text" formControlName="contactNumber" class="form-control" 
+                                       id="contactNumber" placeholder="Enter Contact number">
+                                <label for="contactNumber">Contact Number</label>
                                 <div class="invalid-feedback" 
-                                     [style.display]="registrationForm.get('phone')?.invalid && registrationForm.get('phone')?.touched ? 'block' : 'none'">
-                                    Valid 10-digit phone number is required
+                                     [style.display]="registrationForm.get('contactNumber')?.invalid && registrationForm.get('contactNumber')?.touched ? 'block' : 'none'">
+                                    Valid 10-digit contact number is required
                                 </div>
                             </div>
                         </div>
@@ -107,7 +107,7 @@
                                     <option value="" disabled>Select role</option>
                                     <option value="user">User</option>
                                     <option value="organizer">Organizer</option>
-                                    <option value="admin">Admin</option>
+                                    <!-- <option value="admin">Admin</option> -->
                                 </select>
                                 <label for="roles">Role</label>
                                 <div class="invalid-feedback" 
