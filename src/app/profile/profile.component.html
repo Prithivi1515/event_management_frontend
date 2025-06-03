@@ -1,0 +1,290 @@
+<div class="profile-container">
+  <div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-7">
+        
+        <!-- Header -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <div class="d-flex align-items-center">
+              <div class="profile-avatar me-3">
+                <div class="avatar-circle bg-white text-primary d-flex align-items-center justify-content-center">
+                  <span class="fw-bold fs-4">{{ getAvatarInitials() }}</span>
+                </div>
+              </div>
+              <div class="flex-grow-1">
+                <h4 class="mb-1">
+                  <i class="bi bi-person-circle me-2"></i>
+                  {{ isEditMode ? 'Edit Profile' : 'My Profile' }}
+                </h4>
+                <p class="mb-0 opacity-75">
+                  {{ isEditMode ? 'Update your account information' : 'Manage your account settings' }}
+                </p>
+              </div>
+              <div class="d-flex gap-2">
+                <button *ngIf="!isEditMode" 
+                        class="btn btn-light btn-sm" 
+                        (click)="toggleEditMode()"
+                        [disabled]="isLoading">
+                  <i class="bi bi-pencil me-1"></i>
+                  Edit
+                </button>
+                <button *ngIf="isEditMode" 
+                        class="btn btn-outline-light btn-sm" 
+                        (click)="toggleEditMode()"
+                        [disabled]="isUpdating">
+                  <i class="bi bi-x me-1"></i>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="card border-0 shadow-sm" *ngIf="isLoading">
+          <div class="card-body text-center py-5">
+            <div class="spinner-border text-primary mb-3" role="status">
+              <span class="visually-hidden">Loading profile...</span>
+            </div>
+            <p class="text-muted mb-0">Loading your profile information...</p>
+          </div>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div class="alert alert-success d-flex align-items-center" 
+             *ngIf="successMessage && !isLoading" 
+             role="alert">
+          <i class="bi bi-check-circle me-2"></i>
+          <div>{{ successMessage }}</div>
+        </div>
+
+        <div class="alert alert-danger d-flex align-items-center" 
+             *ngIf="errorMessage && !isLoading" 
+             role="alert">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <div>{{ errorMessage }}</div>
+        </div>
+
+        <!-- Main Profile Content -->
+        <div class="card border-0 shadow-sm" *ngIf="!isLoading">
+          <div class="card-body">
+            
+            <!-- View Mode -->
+            <div *ngIf="!isEditMode" class="profile-view">
+              <div class="row g-4">
+                <!-- User Information -->
+                <div class="col-12">
+                  <h5 class="border-bottom pb-2 mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Personal Information
+                  </h5>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="form-label text-muted small">Full Name</label>
+                    <div class="info-value">{{ user.name || 'Not provided' }}</div>
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="form-label text-muted small">Email Address</label>
+                    <div class="info-value">{{ user.email || 'Not provided' }}</div>
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="form-label text-muted small">Contact Number</label>
+                    <div class="info-value">
+                      {{ user.contactNumber ? formatContactNumber(user.contactNumber) : 'Not provided' }}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="form-label text-muted small">Account Type</label>
+                    <div class="info-value">
+                      <span class="badge" [class]="'bg-' + getRoleColor(user.roles || 'user')">
+                        <i [class]="getRoleIcon(user.roles || 'user')" class="me-1"></i>
+                        {{ formatRole(user.roles || 'user') }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="row mt-4">
+                <div class="col-12">
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-outline-primary" (click)="goToTicketHistory()">
+                      <i class="bi bi-ticket-perforated me-2"></i>
+                      My Tickets
+                    </button>
+                    <button class="btn btn-outline-secondary" (click)="goToEvents()">
+                      <i class="bi bi-calendar-event me-2"></i>
+                      Browse Events
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div *ngIf="isEditMode" class="profile-edit">
+              <form #profileForm="ngForm" (ngSubmit)="updateProfile(profileForm)" novalidate>
+                
+                <!-- Form Validation Summary -->
+                <div class="alert alert-warning" *ngIf="!isFormValid() && profileForm.submitted">
+                  <i class="bi bi-exclamation-triangle me-2"></i>
+                  <strong>Please fix the following issues:</strong>
+                  <div class="mt-2">{{ getValidationError() }}</div>
+                </div>
+
+                <!-- Change Summary -->
+                <div class="alert alert-info" *ngIf="hasFormChanges()">
+                  <i class="bi bi-info-circle me-2"></i>
+                  <strong>Changes to be saved:</strong>
+                  <ul class="mt-2 mb-0">
+                    <li *ngFor="let change of getChangeSummary()">{{ change }}</li>
+                  </ul>
+                </div>
+
+                <div class="row g-3">
+                  <!-- Personal Information Section -->
+                  <div class="col-12">
+                    <h5 class="border-bottom pb-2 mb-3">
+                      <i class="bi bi-pencil me-2"></i>
+                      Edit Personal Information
+                    </h5>
+                  </div>
+
+                  <!-- Name Field -->
+                  <div class="col-md-6">
+                    <label for="name" class="form-label">Full Name *</label>
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-person"></i>
+                      </span>
+                      <input type="text" 
+                             id="name" 
+                             name="name"
+                             class="form-control" 
+                             [(ngModel)]="userForm.name"
+                             #nameField="ngModel"
+                             required
+                             minlength="2"
+                             maxlength="100"
+                             placeholder="Enter your full name">
+                    </div>
+                    <div class="form-text">Minimum 2 characters required</div>
+                  </div>
+
+                  <!-- Email Field -->
+                  <div class="col-md-6">
+                    <label for="email" class="form-label">Email Address *</label>
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-envelope"></i>
+                      </span>
+                      <input type="email" 
+                             id="email" 
+                             name="email"
+                             class="form-control" 
+                             [(ngModel)]="userForm.email"
+                             #emailField="ngModel"
+                             required
+                             email
+                             placeholder="Enter your email address">
+                    </div>
+                    <div class="form-text">Must be a valid email address</div>
+                  </div>
+
+                  <!-- Contact Number Field -->
+                  <div class="col-md-6">
+                    <label for="contactNumber" class="form-label">Contact Number *</label>
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-telephone"></i>
+                      </span>
+                      <span class="input-group-text">+91</span>
+                      <input type="number" 
+                             id="contactNumber" 
+                             name="contactNumber"
+                             class="form-control" 
+                             [(ngModel)]="userForm.contactNumber"
+                             #contactField="ngModel"
+                             required
+                             min="6000000000"
+                             max="9999999999"
+                             placeholder="Enter 10-digit number">
+                    </div>
+                    <div class="form-text">10-digit Indian phone number starting with 6, 7, 8, or 9</div>
+                  </div>
+
+                  <!-- Role Field (only for admins) -->
+                  <div class="col-md-6">
+                    <label for="roles" class="form-label">
+                      Account Type *
+                      <span *ngIf="!canChangeRole" class="text-muted">(Read-only)</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i [class]="getRoleIcon(userForm.roles)"></i>
+                      </span>
+                      <select id="roles" 
+                              name="roles"
+                              class="form-select" 
+                              [(ngModel)]="userForm.roles"
+                              [disabled]="!canChangeRole"
+                              required>
+                        <option value="user">User</option>
+                        <option value="organizer">Organizer</option>
+                        <option value="admin" *ngIf="canChangeRole">Admin</option>
+                      </select>
+                    </div>
+                    <div class="form-text">
+                      {{ canChangeRole ? 'Select account type' : 'Only administrators can change account types' }}
+                    </div>
+                  </div>
+
+                  <!-- Form Actions -->
+                  <div class="col-12">
+                    <div class="d-flex gap-2 justify-content-end pt-3 border-top">
+                      <button type="button" 
+                              class="btn btn-outline-secondary" 
+                              (click)="resetForm()"
+                              [disabled]="isUpdating">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        Reset
+                      </button>
+                      <button type="button" 
+                              class="btn btn-secondary" 
+                              (click)="toggleEditMode()"
+                              [disabled]="isUpdating">
+                        <i class="bi bi-x me-2"></i>
+                        Cancel
+                      </button>
+                      <button type="submit" 
+                              class="btn btn-primary" 
+                              [disabled]="!isFormValid() || isUpdating || !hasFormChanges()">
+                        <span *ngIf="isUpdating" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <i *ngIf="!isUpdating" class="bi bi-check me-2"></i>
+                        {{ isUpdating ? 'Updating...' : 'Save Changes' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

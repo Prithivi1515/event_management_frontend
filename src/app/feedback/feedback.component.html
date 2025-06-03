@@ -1,0 +1,260 @@
+<div class="feedback-container">
+  <div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-7">
+        <!-- Header Card -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <h2 class="mb-1 h4">
+                  <i class="bi bi-chat-square-text me-2"></i>
+                  {{ isEditMode ? 'Update Your Feedback' : 'Share Your Feedback' }}
+                </h2>
+                <p class="mb-0 opacity-75">
+                  {{ eventName ? 'Tell us about your experience with ' + eventName : 'Help us improve our services' }}
+                </p>
+              </div>
+              <button 
+                type="button" 
+                class="btn btn-light btn-sm"
+                (click)="goBack()"
+                title="Go back">
+                <i class="bi bi-arrow-left"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="card border-0 shadow-sm" *ngIf="isLoading">
+          <div class="card-body text-center py-4">
+            <div class="spinner-border text-primary mb-3" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mb-0">Loading event details...</p>
+          </div>
+        </div>
+
+        <!-- Main Feedback Form -->
+        <div class="card border-0 shadow-sm" *ngIf="!isLoading">
+          <div class="card-body p-4">
+            <!-- Success Message -->
+            <div class="alert alert-success d-flex align-items-center" *ngIf="successMessage" role="alert">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <div>{{ successMessage }}</div>
+            </div>
+
+            <!-- Error Message -->
+            <div class="alert alert-danger d-flex align-items-center" *ngIf="errorMessage" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <div>{{ errorMessage }}</div>
+            </div>
+
+            <!-- Event Information -->
+            <div class="alert alert-info border-0" *ngIf="eventInfo || eventName">
+              <h6 class="alert-heading mb-2">
+                <i class="bi bi-calendar-event me-2"></i>Event Details
+              </h6>
+              
+              <div class="row g-2 small">
+                <div class="col-md-6" *ngIf="eventInfo?.name || eventName">
+                  <strong>Event:</strong> {{ eventInfo?.name || eventName }}
+                </div>
+                <div class="col-md-6" *ngIf="eventInfo?.category">
+                  <strong>Category:</strong> {{ eventInfo?.category | titlecase }}
+                </div>
+                <div class="col-md-6" *ngIf="eventInfo?.location">
+                  <strong>Location:</strong> {{ eventInfo?.location }}
+                </div>
+                <div class="col-md-6" *ngIf="eventInfo?.date">
+                  <strong>Date:</strong> {{ formatDate(eventInfo?.date || '') }}
+                </div>
+                <div class="col-md-6" *ngIf="ticketId">
+                  <strong>Ticket ID:</strong> #{{ ticketId }}
+                </div>
+                <div class="col-md-6" *ngIf="ticketStatus">
+                  <strong>Status:</strong> 
+                  <span class="badge" [class]="'bg-' + (ticketStatus === 'CONFIRMED' ? 'success' : ticketStatus === 'CANCELLED' ? 'danger' : 'warning')">
+                    {{ ticketStatus | titlecase }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feedback Form -->
+            <form (ngSubmit)="submitFeedback()" #feedbackForm="ngForm" novalidate>
+              <!-- Rating Section -->
+              <div class="mb-4">
+                <label class="form-label fw-bold text-dark">
+                  <i class="bi bi-star me-2"></i>Overall Rating *
+                </label>
+                <div class="rating-container">
+                  <div class="rating-stars d-flex align-items-center gap-1 mb-2">
+                    <button 
+                      type="button"
+                      class="btn btn-link rating-star p-1"
+                      *ngFor="let star of getRatingStars()"
+                      (click)="setRating(star)"
+                      [class.active]="star <= feedback.rating"
+                      [attr.aria-label]="'Rate ' + star + ' star' + (star > 1 ? 's' : '')"
+                      title="{{ star }} star{{ star > 1 ? 's' : '' }}">
+                      <i class="bi bi-star-fill fs-4"></i>
+                    </button>
+                  </div>
+                  
+                  <div class="rating-text" *ngIf="feedback.rating > 0">
+                    <span class="badge bg-secondary">
+                      {{ feedback.rating }}/5 - {{ getRatingText(feedback.rating) }}
+                    </span>
+                  </div>
+                  
+                  <small class="form-text text-muted d-block mt-1">
+                    Click on the stars to rate your experience (1 = Poor, 5 = Excellent)
+                  </small>
+                </div>
+              </div>
+
+              <!-- Comments Section -->
+              <div class="mb-4">
+                <label for="feedbackComments" class="form-label fw-bold text-dark">
+                  <i class="bi bi-chat-left-text me-2"></i>Your Feedback *
+                </label>
+                <textarea 
+                  id="feedbackComments"
+                  class="form-control" 
+                  rows="5"
+                  [(ngModel)]="feedback.comments"
+                  name="feedbackComments"
+                  placeholder="Please share your detailed feedback about the event, booking process, venue, or any other aspect of your experience..."
+                  required
+                  maxlength="500"
+                  [class.is-invalid]="feedback.comments.length === 0 && feedbackForm.submitted"
+                  [class.border-warning]="isCharacterLimitReached()"></textarea>
+                
+                <div class="d-flex justify-content-between align-items-center mt-1">
+                  <small class="form-text text-muted">
+                    Share details about what you liked or didn't like
+                  </small>
+                  <small class="form-text" [class.text-warning]="isCharacterLimitReached()" [class.text-muted]="!isCharacterLimitReached()">
+                    {{ getCharacterCount() }} characters
+                  </small>
+                </div>
+                
+                <div class="invalid-feedback">
+                  Please provide your feedback comments.
+                </div>
+              </div>
+
+              <!-- Additional Information -->
+              <div class="bg-light rounded p-3 mb-4">
+                <h6 class="mb-2">
+                  <i class="bi bi-info-circle me-2"></i>Your feedback helps us:
+                </h6>
+                <ul class="small text-muted mb-0 ps-3">
+                  <li>Improve our events and services</li>
+                  <li>Help other users make better choices</li>
+                  <li>Recognize outstanding organizers and venues</li>
+                  <li>Address any issues you may have experienced</li>
+                </ul>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="d-flex flex-column flex-sm-row gap-2">
+                <!-- Submit/Update Button -->
+                <button 
+                  type="submit" 
+                  class="btn btn-primary btn-lg flex-fill"
+                  [disabled]="!isFormValid() || isSubmitting">
+                  <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </span>
+                  <i *ngIf="!isSubmitting" class="bi bi-send me-2"></i>
+                  {{ isSubmitting ? 'Submitting...' : (isEditMode ? 'Update Feedback' : 'Submit Feedback') }}
+                </button>
+                
+                <!-- Delete Button (only in edit mode) -->
+                <button 
+                  type="button" 
+                  class="btn btn-outline-danger"
+                  *ngIf="isEditMode && existingFeedbackId"
+                  (click)="deleteFeedback()"
+                  [disabled]="isSubmitting">
+                  <i class="bi bi-trash me-2"></i>
+                  Delete
+                </button>
+                
+                <!-- Reset Button -->
+                <button 
+                  type="button" 
+                  class="btn btn-outline-secondary"
+                  (click)="resetForm()"
+                  [disabled]="isSubmitting">
+                  <i class="bi bi-arrow-clockwise me-2"></i>
+                  Reset
+                </button>
+                
+                <!-- Back Button -->
+                <button 
+                  type="button" 
+                  class="btn btn-outline-secondary"
+                  (click)="goBack()"
+                  [disabled]="isSubmitting">
+                  <i class="bi bi-arrow-left me-2"></i>
+                  Back
+                </button>
+              </div>
+
+              <!-- Form Validation Summary -->
+              <div class="mt-3" *ngIf="feedbackForm.submitted && !isFormValid()">
+                <div class="alert alert-warning d-flex align-items-start">
+                  <i class="bi bi-exclamation-triangle me-2 mt-1"></i>
+                  <div>
+                    <strong>Please complete the following:</strong>
+                    <ul class="mb-0 mt-1">
+                      <li *ngIf="feedback.rating === 0">Provide a rating (1-5 stars)</li>
+                      <li *ngIf="feedback.comments.trim().length === 0">Write your feedback comments</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Additional Actions -->
+        <div class="card border-0 shadow-sm mt-4" *ngIf="eventInfo && !isLoading">
+          <div class="card-body">
+            <h6 class="card-title">
+              <i class="bi bi-link-45deg me-2"></i>Related Actions
+            </h6>
+            <div class="d-flex flex-wrap gap-2">
+              <button 
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                (click)="goToEventDetails()"
+                *ngIf="feedback.eventId">
+                <i class="bi bi-eye me-1"></i>
+                View Event Details
+              </button>
+              
+              <a 
+                [routerLink]="['/ticket-history']"
+                class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-ticket-perforated me-1"></i>
+                My Tickets
+              </a>
+              
+              <a 
+                [routerLink]="['/events']"
+                class="btn btn-outline-info btn-sm">
+                <i class="bi bi-calendar-event me-1"></i>
+                Browse Events
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

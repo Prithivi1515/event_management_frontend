@@ -1,0 +1,250 @@
+<div class="ticket-history-container">
+  <div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h1 class="h3 mb-1">
+              <i class="bi bi-ticket-perforated me-2 text-primary"></i>
+              My Ticket History
+            </h1>
+            <p class="text-muted mb-0">View and manage your booked tickets</p>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" (click)="refreshTickets()" [disabled]="loading">
+              <i class="bi bi-arrow-clockwise me-2"></i>
+              Refresh
+            </button>
+            <button class="btn btn-primary" (click)="goToEvents()">
+              <i class="bi bi-plus-circle me-2"></i>
+              Book New Ticket
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="row" *ngIf="loading">
+      <div class="col-12">
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading tickets...</span>
+          </div>
+          <p class="text-muted">Loading your ticket history...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="row" *ngIf="error && !loading">
+      <div class="col-12">
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <div>{{ error }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="row" *ngIf="!loading && !error && tickets.length === 0">
+      <div class="col-12">
+        <div class="text-center py-5">
+          <i class="bi bi-ticket display-1 text-muted mb-3"></i>
+          <h4 class="text-muted">No Tickets Found</h4>
+          <p class="text-muted mb-4">You haven't booked any tickets yet. Start exploring events!</p>
+          <button class="btn btn-primary btn-lg" (click)="goToEvents()">
+            <i class="bi bi-search me-2"></i>
+            Browse Events
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tickets List -->
+    <div class="row" *ngIf="!loading && !error && tickets.length > 0">
+      <div class="col-12">
+        <!-- Tickets Cards -->
+        <div class="row g-4">
+          <div class="col-lg-6" *ngFor="let ticket of tickets; trackBy: trackByTicketId">
+            <div class="card ticket-card h-100 border-0 shadow-sm">
+              <div class="card-header bg-white border-bottom-0 pb-0">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="d-flex align-items-center">
+                    <i [class]="getCategoryIcon(ticket.event?.category)" class="me-2 text-primary fs-5"></i>
+                    <div>
+                      <h6 class="card-title mb-1 fw-bold">
+                        {{ ticket.event?.name || 'Event Details Loading...' }}
+                      </h6>
+                    </div>
+                  </div>
+                  <span class="badge rounded-pill" [class]="getStatusClass(ticket.status)">
+                    {{ ticket.status | titlecase }}
+                  </span>
+                </div>
+              </div>
+              
+              <div class="card-body">
+                <!-- Booking Details -->
+                <div class="booking-details mb-3">
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <small class="text-muted">Booking ID:</small>
+                      <div class="fw-medium">#{{ ticket.ticketId }}</div>
+                    </div>
+                    <div class="col-6">
+                      <small class="text-muted">Quantity:</small>
+                      <div class="fw-medium">{{ ticket.quantity }} ticket(s)</div>
+                    </div>
+                    <div class="col-6">
+                      <small class="text-muted">Total Amount:</small>
+                      <div class="fw-bold text-success">{{ formatPrice(ticket.totalAmount) }}</div>
+                    </div>
+                    <div class="col-6">
+                      <small class="text-muted">Booked On:</small>
+                      <div class="fw-medium">{{ formatDate(ticket.bookingDate) }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Event loading indicator -->
+                <div *ngIf="!ticket.event" class="text-center py-2">
+                  <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                    <span class="visually-hidden">Loading event details...</span>
+                  </div>
+                  <small class="text-muted">Loading event details...</small>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="card-footer bg-white border-top-0">
+                <div class="d-flex flex-column gap-2">
+                  <!-- First row - Status info -->
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="small text-muted">
+                      <div *ngIf="ticket.status !== 'CANCELLED' && canCancelTicket(ticket)" class="text-success">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Can be cancelled
+                      </div>
+                      <div *ngIf="ticket.status !== 'CANCELLED' && !canCancelTicket(ticket)" class="text-warning">
+                        <i class="bi bi-clock me-1"></i>
+                        {{ ticket.event?.date ? 'Event has started' : 'Checking event status...' }}
+                      </div>
+                      <div *ngIf="ticket.status === 'CANCELLED'" class="text-danger">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Cancelled
+                      </div>
+                    </div>
+
+                    <!-- Status-based feedback button -->
+                    <div *ngIf="canShowFeedbackButton(ticket)">
+                      <button 
+                        class="btn btn-outline-info btn-sm"
+                        (click)="goToFeedback(ticket)"
+                        title="Share your experience about this event">
+                        <i class="bi bi-chat-square-text me-1"></i>
+                        Feedback
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Second row - Action buttons -->
+                  <div class="d-flex gap-2 justify-content-end">
+                    <!-- Loading button for event details -->
+                    <button *ngIf="!ticket.event" 
+                            class="btn btn-outline-secondary btn-sm" 
+                            disabled>
+                      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                      Loading...
+                    </button>
+                    
+                    <!-- Cancel button - Show for any non-cancelled ticket if event hasn't started -->
+                    <button *ngIf="ticket.status !== 'CANCELLED' && canCancelTicket(ticket)" 
+                            class="btn btn-outline-danger btn-sm"
+                            [disabled]="cancellingTicketId === ticket.ticketId"
+                            (click)="cancelTicket(ticket)">
+                      <span *ngIf="cancellingTicketId === ticket.ticketId" 
+                            class="spinner-border spinner-border-sm me-1" role="status"></span>
+                      <i *ngIf="cancellingTicketId !== ticket.ticketId" class="bi bi-x-circle me-1"></i>
+                      {{ cancellingTicketId === ticket.ticketId ? 'Cancelling...' : 'Cancel Ticket' }}
+                    </button>
+                    
+                    <!-- Cannot cancel message -->
+                    <span *ngIf="ticket.status !== 'CANCELLED' && !canCancelTicket(ticket) && ticket.event" 
+                          class="btn btn-outline-secondary btn-sm disabled">
+                      <i class="bi bi-clock me-1"></i>
+                      Cannot Cancel
+                    </span>
+
+                    <!-- Already cancelled message -->
+                    <span *ngIf="ticket.status === 'CANCELLED'" 
+                          class="btn btn-outline-secondary btn-sm disabled">
+                      <i class="bi bi-x-circle me-1"></i>
+                      Cancelled
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Additional status information -->
+                <div class="mt-2 small text-muted" *ngIf="ticket.event?.date">
+                  <span *ngIf="canCancelTicket(ticket)" class="text-success ms-2">
+                    (Cancellation available)
+                  </span>
+                  <span *ngIf="!canCancelTicket(ticket) && ticket.status !== 'CANCELLED'" class="text-warning ms-2">
+                    (Event started - No cancellation)
+                  </span>
+                </div>
+
+                <!-- Show loading message when event details are being fetched -->
+                <div class="mt-2 small text-muted" *ngIf="!ticket.event">
+                  <i class="bi bi-clock me-1"></i>
+                  Event details loading... Cancellation status will be updated once loaded.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Better pagination/summary info -->
+        <div class="row mt-4" *ngIf="tickets.length > 0">
+          <div class="col-12">
+            <div class="text-center text-muted">
+              <p class="mb-0">
+                Showing {{ tickets.length }} ticket(s) • 
+                {{ getConfirmedTicketsCount() }} confirmed • 
+                {{ getCancelledTicketsCount() }} cancelled
+              </p>
+              <small>
+                Total amount for confirmed tickets: {{ formatPrice(getTotalAmount()) }}
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback Call-to-Action Section -->
+        <div class="row mt-5" *ngIf="getAttendedEventsCount() > 0">
+          <div class="col-12">
+            <div class="card bg-light border-0">
+              <div class="card-body text-center py-4">
+                <div class="mb-3">
+                  <i class="bi bi-star display-4 text-warning"></i>
+                </div>
+                <h5 class="card-title mb-2">Share Your Experience!</h5>
+                <p class="card-text text-muted mb-3">
+                  Help others discover great events by sharing your feedback about the events you've attended.
+                </p>
+                <button 
+                  class="btn btn-warning btn-lg"
+                  (click)="goToGeneralFeedback()">
+                  <i class="bi bi-chat-square-heart me-2"></i>
+                  Leave Feedback
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
