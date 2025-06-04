@@ -27,9 +27,9 @@ interface Ticket {
   quantity: number;
   totalAmount: number;
   bookingDate: string;
-  status: string; // 'CONFIRMED', 'CANCELLED', 'PENDING'
-  event?: Event; // Event details populated from API
-  cancellable?: boolean; // Derived property
+  status: 'BOOKED' | 'CANCELLED' | 'PENDING'; // Updated to match service
+  event?: Event;
+  cancellable?: boolean;
 }
 
 interface CancelResponse {
@@ -107,7 +107,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
   }
 
   private getCurrentUserId(): number {
-    // Try localStorage first
     const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
       const parsedId = parseInt(storedUserId, 10);
@@ -116,7 +115,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Try decoding from JWT token as fallback
     const token = this.getJwtToken();
     if (!token) return 0;
 
@@ -195,7 +193,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
           this.tickets = this.processTickets(tickets);
           this.loading = false;
           
-          // Load event details for each ticket
           this.loadEventDetailsForTickets();
         },
         error: (error: HttpErrorResponse) => {
@@ -221,44 +218,35 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
   }
 
   private isTicketCancellable(ticket: Ticket): boolean {
-    // Cannot cancel if already cancelled
     if (ticket.status === 'CANCELLED') {
       return false;
     }
 
-    // If we have event details, check if event is in the future
     if (ticket.event?.date) {
       const eventDate = new Date(ticket.event.date);
       const now = new Date();
       
-      // Can cancel if event hasn't started yet
       return eventDate > now;
     }
 
-    // If no event details yet, assume cancellable (will be updated when event details load)
     return true;
   }
 
-  // Fixed: Make this method safe for template use
   canCancelTicket(ticket: Ticket): boolean {
-    // Cannot cancel if already cancelled
     if (ticket.status === 'CANCELLED') {
       return false;
     }
 
-    // If we have event details, check if event is in the future
     if (ticket.event?.date) {
       try {
         const eventDate = new Date(ticket.event.date);
         const now = new Date();
         
-        // Ensure dates are valid
         if (isNaN(eventDate.getTime()) || isNaN(now.getTime())) {
           console.warn('Invalid date detected for ticket:', ticket.ticketId);
           return false;
         }
         
-        // Allow cancellation if event hasn't started yet
         return eventDate > now;
       } catch (error) {
         console.error('Error checking cancellation eligibility:', error);
@@ -266,7 +254,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
       }
     }
 
-    // If no event details yet, assume cancellable
     return true;
   }
 
@@ -287,7 +274,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
         { headers }
       ).subscribe({
         next: (event: Event) => {
-          // Update all tickets with this event ID
           this.tickets.forEach(ticket => {
             if (ticket.eventId === eventId) {
               ticket.event = event;
@@ -295,13 +281,10 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
             }
           });
           
-          // Sort tickets again after event details are loaded
           this.tickets.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
         },
         error: (error: HttpErrorResponse) => {
           console.warn(`Could not load event details for event ID ${eventId}:`, error);
-          // Don't show error to user as this is supplementary data
-          // Set a placeholder for failed event loads
           this.tickets.forEach(ticket => {
             if (ticket.eventId === eventId && !ticket.event) {
               ticket.event = {
@@ -310,7 +293,7 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
                 name: 'Event Details Unavailable',
                 category: 'unknown',
                 location: 'Location Unavailable',
-                date: new Date().toISOString(), // Use current date as fallback
+                date: new Date().toISOString(),
                 venue: 'Venue Unavailable',
                 description: 'Event details could not be loaded'
               };
@@ -339,7 +322,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
         break;
       case 404:
         errorMessage = 'No tickets found for this user.';
-        // Don't show error for 404, just show empty state
         this.tickets = [];
         return;
       case 0:
@@ -356,7 +338,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
   }
 
   cancelTicket(ticket: Ticket): void {
-    // Check if ticket can be cancelled
     if (!this.canCancelTicket(ticket) || this.cancellingTicketId === ticket.ticketId) {
       return;
     }
@@ -373,11 +354,10 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
       `Quantity: ${ticketQuantity} ticket(s)\n` +
       `Amount: ${totalAmount}\n\n`;
 
-    // Add specific message based on ticket status
     if (ticket.status === 'PENDING') {
       confirmMessage += `Note: This ticket is still pending confirmation, but you can cancel it now.\n\n`;
-    } else if (ticket.status === 'CONFIRMED') {
-      confirmMessage += `Note: This confirmed ticket will be cancelled and refund policies may apply.\n\n`;
+    } else if (ticket.status === 'BOOKED') {
+      confirmMessage += `Note: This booked ticket will be cancelled and refund policies may apply.\n\n`;
     }
 
     confirmMessage += `This action cannot be undone.`;
@@ -397,18 +377,16 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
     try {
       const headers = this.getAuthHeaders();
       
-      // Use DELETE request with text response type since backend returns plain text
       const cancelSubscription = this.http.delete(
         `${this.ticketApiUrl}/cancel/${ticket.ticketId}`,
         { 
           headers,
-          responseType: 'text' // Expect text response, not JSON
+          responseType: 'text'
         }
       ).subscribe({
         next: (response: string) => {
           console.log('Ticket cancelled successfully - Response:', response);
           
-          // Create a CancelResponse object from the text response
           const cancelResponse: CancelResponse = {
             message: response || 'Ticket cancelled successfully',
             status: 'SUCCESS',
@@ -426,11 +404,9 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
             error: error.error
           });
           
-          // Handle the case where status is 200 but treated as error due to response type mismatch
           if (error.status === 200) {
             console.log('Status 200 received but treated as error - handling as success');
             
-            // Extract the success message from error response
             let message = 'Ticket cancelled successfully';
             if (error.error && typeof error.error === 'string') {
               message = error.error;
@@ -465,7 +441,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
     
     const successMessage = response.message || 'Ticket cancelled successfully!';
     
-    // Update ticket status in the list immediately
     const ticketIndex = this.tickets.findIndex(t => t.ticketId === ticket.ticketId);
     if (ticketIndex !== -1) {
       this.tickets[ticketIndex].status = 'CANCELLED';
@@ -474,13 +449,10 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
       console.log(`Updated ticket ${ticket.ticketId} status to CANCELLED`);
     }
 
-    // Show success message
     this.showSuccess(`${successMessage}\n\nTicket #${ticket.ticketId} has been cancelled successfully.`);
     
-    // Clear any existing error messages
     this.error = '';
     
-    // Optional: Auto-refresh tickets after a delay to sync with server
     setTimeout(() => {
       console.log('Auto-refreshing tickets after cancellation');
       this.refreshTickets();
@@ -508,7 +480,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
         break;
       case 404:
         errorMessage = 'Ticket not found or already cancelled.';
-        // Refresh tickets to get current status
         this.refreshTickets();
         break;
       case 409:
@@ -518,7 +489,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
         errorMessage = 'Server error. Please try again later.';
         break;
       default:
-        // Extract error message from response
         if (error.error) {
           if (typeof error.error === 'string') {
             errorMessage = error.error;
@@ -537,9 +507,8 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
     this.showError(errorMessage);
   }
 
-  // Template helper methods
-  getConfirmedTicketsCount(): number {
-    return this.tickets.filter(ticket => ticket.status === 'CONFIRMED').length;
+  getBookedTicketsCount(): number {
+    return this.tickets.filter(ticket => ticket.status === 'BOOKED').length;
   }
 
   getCancelledTicketsCount(): number {
@@ -548,31 +517,56 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
 
   getTotalAmount(): number {
     return this.tickets
-      .filter(ticket => ticket.status === 'CONFIRMED')
+      .filter(ticket => ticket.status === 'BOOKED')
       .reduce((total, ticket) => total + ticket.totalAmount, 0);
   }
 
   getAttendedEventsCount(): number {
     return this.tickets.filter(ticket => {
-      if (ticket.status !== 'CONFIRMED' || !ticket.event?.date) {
+      if (ticket.status !== 'BOOKED' || !ticket.event?.date) {
         return false;
       }
       
       try {
         const eventDate = new Date(ticket.event.date);
         const now = new Date();
-        return eventDate < now; // Event has already happened
+        return eventDate < now;
       } catch {
         return false;
       }
     }).length;
   }
 
+  getFeedbackEligibleTicketsCount(): number {
+    return this.tickets.filter(ticket => this.canShowFeedbackButton(ticket)).length;
+  }
+
+  getRecentlyAttendedTickets(): Ticket[] {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    return this.tickets.filter(ticket => {
+      if (!this.canShowFeedbackButton(ticket) || !ticket.event?.date) {
+        return false;
+      }
+
+      try {
+        const eventDate = new Date(ticket.event.date);
+        const now = new Date();
+        
+        return ticket.status === 'BOOKED' &&
+               eventDate < now && 
+               eventDate > sevenDaysAgo;
+      } catch {
+        return false;
+      }
+    });
+  }
+
   trackByTicketId(index: number, ticket: Ticket): number {
     return ticket.ticketId;
   }
 
-  // Utility methods for template
   formatDate(dateString: string): string {
     try {
       if (!dateString) {
@@ -619,7 +613,7 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
 
   getStatusClass(status: string): string {
     switch (status.toUpperCase()) {
-      case 'CONFIRMED':
+      case 'BOOKED':
         return 'bg-success';
       case 'CANCELLED':
         return 'bg-danger';
@@ -630,7 +624,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Fixed: Make category icon method null-safe
   getCategoryIcon(category: string | undefined): string {
     if (!category) {
       return 'bi-calendar-event';
@@ -649,6 +642,102 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
     return icons[category.toLowerCase()] || 'bi-calendar-event';
   }
 
+  getEventStatus(ticket: Ticket): { status: string; message: string; class: string; icon: string } {
+    if (!ticket.event?.date) {
+      return { 
+        status: 'unknown', 
+        message: 'Event date unavailable', 
+        class: 'text-muted',
+        icon: 'bi-question-circle'
+      };
+    }
+
+    try {
+      const eventDate = new Date(ticket.event.date);
+      const now = new Date();
+      const diffMs = eventDate.getTime() - now.getTime();
+      const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      if (ticket.status === 'CANCELLED') {
+        return { 
+          status: 'cancelled', 
+          message: 'Ticket cancelled', 
+          class: 'text-danger',
+          icon: 'bi-x-circle-fill'
+        };
+      }
+
+      if (diffMs < 0) {
+        const hoursSinceEnd = Math.abs(diffHours);
+        if (hoursSinceEnd < 24) {
+          return { 
+            status: 'just-ended', 
+            message: 'Event just completed', 
+            class: 'text-success',
+            icon: 'bi-check-circle-fill'
+          };
+        } else {
+          return { 
+            status: 'ended', 
+            message: 'Event completed', 
+            class: 'text-success',
+            icon: 'bi-check-circle-fill'
+          };
+        }
+      } else if (diffHours <= 2) {
+        return { 
+          status: 'starting', 
+          message: 'Event starting soon', 
+          class: 'text-warning',
+          icon: 'bi-clock-fill'
+        };
+      } else if (diffDays <= 1) {
+        return { 
+          status: 'today', 
+          message: 'Event starting soon', 
+          class: 'text-info',
+          icon: 'bi-calendar-check'
+        };
+      } else if (diffDays <= 7) {
+        return { 
+          status: 'upcoming', 
+          message: `Event in ${diffDays} days`, 
+          class: 'text-info',
+          icon: 'bi-calendar-event'
+        };
+      } else {
+        return { 
+          status: 'future', 
+          message: 'Event scheduled', 
+          class: 'text-muted',
+          icon: 'bi-calendar'
+        };
+      }
+    } catch {
+      return { 
+        status: 'error', 
+        message: 'Invalid event date', 
+        class: 'text-danger',
+        icon: 'bi-exclamation-triangle'
+      };
+    }
+  }
+
+  hasEventEnded(ticket: Ticket): boolean {
+    if (!ticket.event?.date) {
+      return false;
+    }
+
+    try {
+      const eventDate = new Date(ticket.event.date);
+      const now = new Date();
+      return eventDate < now;
+    } catch {
+      return false;
+    }
+  }
+
   refreshTickets(): void {
     this.error = '';
     this.loadTicketHistory();
@@ -659,7 +748,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
   }
 
   goToFeedback(ticket: Ticket): void {
-    // Navigate to feedback page with ticket and event information
     const queryParams = {
       ticketId: ticket.ticketId,
       eventId: ticket.eventId,
@@ -672,7 +760,6 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
   }
 
   goToGeneralFeedback(): void {
-    // Navigate to general feedback page
     this.router.navigate(['/feedback'], { 
       queryParams: { 
         source: 'ticket-history',
@@ -682,29 +769,22 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
   }
 
   canShowFeedbackButton(ticket: Ticket): boolean {
-    // Show feedback button for:
-    // 1. Confirmed tickets where the event has passed (attended events)
-    // 2. Cancelled tickets (to give feedback about the cancellation experience)
-    
     if (!ticket.event?.date) {
-      return false; // Can't determine if event has passed without date
+      return false;
     }
 
     try {
       const eventDate = new Date(ticket.event.date);
       const now = new Date();
       
-      // For confirmed tickets, show feedback only after event has passed
-      if (ticket.status === 'CONFIRMED') {
-        return eventDate < now; // Event has already happened
+      if (ticket.status === 'BOOKED') {
+        return eventDate < now;
       }
       
-      // For cancelled tickets, always allow feedback about cancellation experience
       if (ticket.status === 'CANCELLED') {
         return true;
       }
       
-      // For pending tickets, no feedback needed yet
       return false;
     } catch (error) {
       console.error('Error determining feedback eligibility:', error);
@@ -715,22 +795,15 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
   private showSuccess(message: string): void {
     console.log('Success:', message);
     
-    // You can replace this with a toast notification service later
     alert('✅ Success!\n\n' + message);
-    
-    // Optional: Add a success banner to the page
-    // this.successMessage = message;
-    // setTimeout(() => this.successMessage = '', 5000);
   }
 
   private showError(message: string): void {
     console.error('Error:', message);
     this.error = message;
     
-    // You can replace this with a toast notification service later
     alert('❌ Error!\n\n' + message);
     
-    // Auto-clear error after some time
     setTimeout(() => {
       if (this.error === message) {
         this.error = '';

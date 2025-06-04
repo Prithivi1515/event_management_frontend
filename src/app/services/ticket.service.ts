@@ -13,7 +13,7 @@ export interface Ticket {
   quantity: number;
   totalAmount: number;
   bookingDate: string;
-  status: 'CONFIRMED' | 'CANCELLED' | 'PENDING';
+  status: 'BOOKED' | 'CANCELLED' | 'PENDING'; // Changed CONFIRMED to BOOKED
   event?: Event;
   cancellable?: boolean;
 }
@@ -235,7 +235,7 @@ export class TicketService {
       const eventDate = new Date(ticket.event.date);
       const now = new Date();
       
-      if (ticket.status === 'CONFIRMED') {
+      if (ticket.status === 'BOOKED') { // Changed from CONFIRMED to BOOKED
         return eventDate < now; // Event has passed
       }
       
@@ -249,9 +249,64 @@ export class TicketService {
     }
   }
 
+  hasEventEnded(ticket: Ticket): boolean {
+    if (!ticket.event?.date) {
+      return false;
+    }
+
+    try {
+      const eventDate = new Date(ticket.event.date);
+      const now = new Date();
+      return eventDate < now;
+    } catch {
+      return false;
+    }
+  }
+
+  getEventStatus(ticket: Ticket): { status: string; message: string; class: string } {
+    if (!ticket.event?.date) {
+      return { status: 'unknown', message: 'Event date unavailable', class: 'text-muted' };
+    }
+
+    try {
+      const eventDate = new Date(ticket.event.date);
+      const now = new Date();
+      const diffMs = eventDate.getTime() - now.getTime();
+      const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      if (ticket.status === 'CANCELLED') {
+        return { status: 'cancelled', message: 'Ticket cancelled', class: 'text-danger' };
+      }
+
+      if (diffMs < 0) {
+        // Event has ended
+        return { status: 'ended', message: 'Event completed', class: 'text-success' };
+      } else if (diffHours <= 2) {
+        // Event starting soon (within 2 hours)
+        return { status: 'starting', message: 'Event starting soon', class: 'text-warning' };
+      } else if (diffDays <= 1) {
+        // Event is today or tomorrow
+        return { status: 'upcoming', message: 'Event is today', class: 'text-info' };
+      } else if (diffDays <= 7) {
+        // Event within a week
+        return { status: 'upcoming', message: `Event in ${diffDays} days`, class: 'text-info' };
+      } else {
+        // Event is far in the future
+        return { status: 'future', message: 'Event scheduled', class: 'text-muted' };
+      }
+    } catch {
+      return { status: 'error', message: 'Invalid event date', class: 'text-danger' };
+    }
+  }
+
+  isAttendedEvent(ticket: Ticket): boolean {
+    return ticket.status === 'BOOKED' && this.hasEventEnded(ticket); // Changed from CONFIRMED to BOOKED
+  }
+
   // Statistics methods
-  getConfirmedTicketsCount(): number {
-    return this.getCurrentTickets().filter(ticket => ticket.status === 'CONFIRMED').length;
+  getBookedTicketsCount(): number { // Renamed from getConfirmedTicketsCount
+    return this.getCurrentTickets().filter(ticket => ticket.status === 'BOOKED').length;
   }
 
   getCancelledTicketsCount(): number {
@@ -260,13 +315,13 @@ export class TicketService {
 
   getTotalAmount(): number {
     return this.getCurrentTickets()
-      .filter(ticket => ticket.status === 'CONFIRMED')
+      .filter(ticket => ticket.status === 'BOOKED') // Changed from CONFIRMED to BOOKED
       .reduce((total, ticket) => total + ticket.totalAmount, 0);
   }
 
   getAttendedEventsCount(): number {
     return this.getCurrentTickets().filter(ticket => {
-      if (ticket.status !== 'CONFIRMED' || !ticket.event?.date) {
+      if (ticket.status !== 'BOOKED' || !ticket.event?.date) { // Changed from CONFIRMED to BOOKED
         return false;
       }
       

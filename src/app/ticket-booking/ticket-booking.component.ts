@@ -319,7 +319,7 @@ export class TicketBookingComponent implements OnInit, OnDestroy {
     this.showSuccessMessage(successMessage);
     
     setTimeout(() => {
-      this.router.navigate(['/events'], {
+      this.router.navigate(['/events '], {
         queryParams: { 
           message: 'Ticket booked successfully!'
         }
