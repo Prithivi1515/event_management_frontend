@@ -146,6 +146,16 @@
                 </div>
               </a>
             </li>
+
+            <li *ngIf="shouldShowBookings()">
+              <a class="dropdown-item dropdown-item-enhanced" routerLink="/my-feedback">
+                <i class="bi bi-ticket-perforated me-3"></i>
+                <div>
+                  <div>My Feedback</div>
+                  <small class="text-muted">View my feedback</small>
+                </div>
+              </a>
+            </li>
             
             <li><hr class="dropdown-divider my-1"></li>
             

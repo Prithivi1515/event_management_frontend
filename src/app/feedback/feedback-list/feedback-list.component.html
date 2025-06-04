@@ -1,24 +1,19 @@
 <div class="feedback-list-container">
   <div class="container py-4">
     
-    <!-- Header -->
+    <!-- Header with Current User Info -->
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card border-0 shadow-sm">
-          <div class="card-header bg-primary text-white">
+        <div class="card">
+          <div class="card-header">
             <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <h3 class="mb-1">
-                  <i class="bi bi-chat-square-text me-2"></i>
-                  {{ getPageTitle() }}
-                </h3>
-                <p class="mb-0 opacity-75">
-                  {{ getPageSubtitle() }}
-                </p>
-                <!-- Add event info for event view -->
-                <small class="opacity-75" *ngIf="viewMode === 'event' && eventFeedbackSummary">
-                  Event ID: {{ eventId }} | Total Feedbacks: {{ totalFeedbacks }} | Average Rating: {{ averageRating }}/5
-                </small>
+              <div class="d-flex align-items-center">
+                <div>
+                  <h3 class="mb-1">
+                    <i class="bi bi-chat-square-text me-2"></i>
+                    {{ getPageTitle() }}
+                  </h3>
+                </div>
               </div>
               <div class="d-flex gap-2">
                 <button class="btn btn-light btn-sm" (click)="goBack()">
@@ -45,12 +40,12 @@
     <!-- Loading State -->
     <div class="row" *ngIf="isLoading">
       <div class="col-12">
-        <div class="card border-0 shadow-sm">
+        <div class="card">
           <div class="card-body text-center py-5">
-            <div class="spinner-border text-primary mb-3" role="status">
+            <div class="spinner-border text-primary mb-3">
               <span class="visually-hidden">Loading feedbacks...</span>
             </div>
-            <p class="text-muted mb-0">Loading feedbacks...</p>
+            <p class="text-muted mb-0">Loading feedbacks and user details...</p>
           </div>
         </div>
       </div>
@@ -59,12 +54,12 @@
     <!-- Messages -->
     <div class="row" *ngIf="!isLoading">
       <div class="col-12">
-        <div class="alert alert-success d-flex align-items-center" *ngIf="successMessage" role="alert">
+        <div class="alert alert-success d-flex align-items-center" *ngIf="successMessage">
           <i class="bi bi-check-circle me-2"></i>
           <div>{{ successMessage }}</div>
         </div>
         
-        <div class="alert alert-danger d-flex align-items-center" *ngIf="errorMessage" role="alert">
+        <div class="alert alert-danger d-flex align-items-center" *ngIf="errorMessage">
           <i class="bi bi-exclamation-triangle me-2"></i>
           <div>{{ errorMessage }}</div>
         </div>
@@ -74,7 +69,7 @@
     <!-- Statistics Card -->
     <div class="row mb-4" *ngIf="!isLoading && feedbacks.length > 0">
       <div class="col-12">
-        <div class="card border-0 shadow-sm">
+        <div class="card">
           <div class="card-body">
             <h5 class="card-title mb-3">
               <i class="bi bi-graph-up me-2"></i>
@@ -84,40 +79,38 @@
             <div class="row g-3">
               <!-- Total Feedbacks -->
               <div class="col-md-3">
-                <div class="stat-card text-center p-3 border rounded">
-                  <div class="stat-number text-primary display-6 fw-bold">{{ totalFeedbacks }}</div>
-                  <div class="stat-label text-muted">Total Feedbacks</div>
+                <div class="stat-card">
+                  <span class="stat-number">{{ totalFeedbacks }}</span>
+                  <div class="stat-label">Total Feedbacks</div>
                 </div>
               </div>
               
               <!-- Average Rating -->
               <div class="col-md-3">
-                <div class="stat-card text-center p-3 border rounded">
-                  <div class="stat-number text-success display-6 fw-bold">{{ averageRating }}</div>
-                  <div class="stat-label text-muted">Average Rating</div>
+                <div class="stat-card">
+                  <span class="stat-number text-success">{{ averageRating }}</span>
+                  <div class="stat-label">Average Rating</div>
                   <div class="rating-stars mt-1">
                     <i *ngFor="let star of getAverageRatingStars()" 
                        class="bi" 
                        [class.bi-star-fill]="star === 'filled'"
-                       [class.bi-star]="star === 'empty'"
-                       [class.text-warning]="star === 'filled'"></i>
+                       [class.bi-star]="star === 'empty'"></i>
                   </div>
                 </div>
               </div>
               
               <!-- Rating Distribution -->
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <div class="rating-distribution">
                   <h6 class="mb-2">Rating Distribution</h6>
                   <div *ngFor="let rating of [5,4,3,2,1]" class="d-flex align-items-center mb-1">
                     <span class="me-2">{{ rating }} <i class="bi bi-star-fill text-warning"></i></span>
-                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                    <div class="progress flex-grow-1 me-2">
                       <div class="progress-bar" 
-                           [class]="'bg-' + getRatingColor(rating)"
                            [style.width.%]="getRatingPercentage(rating)">
                       </div>
                     </div>
-                    <small class="text-muted">{{ ratingDistribution[rating] || 0 }} ({{ getRatingPercentage(rating) }}%)</small>
+                    <small class="text-muted">{{ ratingDistribution[rating] || 0 }}</small>
                   </div>
                 </div>
               </div>
@@ -130,7 +123,7 @@
     <!-- Filters and Search -->
     <div class="row mb-4" *ngIf="!isLoading && feedbacks.length > 0">
       <div class="col-12">
-        <div class="card border-0 shadow-sm">
+        <div class="card">
           <div class="card-body">
             <div class="row g-3 align-items-end">
               <!-- Search -->
@@ -143,7 +136,7 @@
                   <input type="text" 
                          id="searchInput"
                          class="form-control" 
-                         placeholder="Search by comments, user, or event..."
+                         placeholder="Search by user, event, comment..."
                          [(ngModel)]="searchQuery"
                          (input)="onSearchChange()">
                   <button *ngIf="searchQuery" 
@@ -180,7 +173,8 @@
                         (change)="onSortChange()">
                   <option value="date">Date</option>
                   <option value="rating">Rating</option>
-                  <option value="name">User Name</option>
+                  <option value="user">User Name</option>
+                  <option value="event">Event Name</option>
                 </select>
               </div>
               
@@ -189,7 +183,7 @@
                 <label class="form-label">Order</label>
                 <button class="btn btn-outline-secondary w-100" (click)="toggleSortOrder()">
                   <i class="bi" [class.bi-sort-down]="sortOrder === 'desc'" [class.bi-sort-up]="sortOrder === 'asc'"></i>
-                  {{ sortOrder === 'desc' ? 'Newest First' : 'Oldest First' }}
+                  {{ sortOrder === 'desc' ? 'Newest' : 'Oldest' }}
                 </button>
               </div>
               
@@ -209,7 +203,7 @@
     <!-- No Feedbacks Message -->
     <div class="row" *ngIf="!isLoading && feedbacks.length === 0">
       <div class="col-12">
-        <div class="card border-0 shadow-sm">
+        <div class="card">
           <div class="card-body text-center py-5">
             <i class="bi bi-chat-square-text display-1 text-muted mb-3"></i>
             <h4 class="text-muted mb-2">No Feedbacks Found</h4>
@@ -230,7 +224,7 @@
     <!-- No Results Message -->
     <div class="row" *ngIf="!isLoading && feedbacks.length > 0 && filteredFeedbacks.length === 0">
       <div class="col-12">
-        <div class="card border-0 shadow-sm">
+        <div class="card">
           <div class="card-body text-center py-4">
             <i class="bi bi-search display-4 text-muted mb-3"></i>
             <h5 class="text-muted mb-2">No Results Found</h5>
@@ -248,40 +242,53 @@
       </div>
     </div>
 
-    <!-- Feedback Cards -->
+    <!-- Feedback Cards with Enhanced User Details -->
     <div class="row" *ngIf="!isLoading && getPaginatedFeedbacks().length > 0">
       <div class="col-12">
         <div class="feedback-cards">
-          <div class="card border-0 shadow-sm mb-3" *ngFor="let feedback of getPaginatedFeedbacks()">
+          <div class="card mb-3" *ngFor="let feedback of getPaginatedFeedbacks()">
             <div class="card-body">
               <div class="row">
-                <!-- Feedback Header -->
+                <!-- Feedback Header with User Details -->
                 <div class="col-12">
                   <div class="d-flex align-items-start justify-content-between mb-3">
-                    <div class="feedback-info">
-                      <div class="d-flex align-items-center mb-1">
-                        <!-- User Info (for event view) -->
-                        <div *ngIf="viewMode === 'event'" class="user-avatar me-2">
-                          <div class="avatar-circle bg-primary text-white d-flex align-items-center justify-content-center">
-                            <span class="fw-bold">{{ (feedback.userName || 'U').charAt(0).toUpperCase() }}</span>
+                    <div class="feedback-info flex-grow-1">
+                      <div class="d-flex align-items-center mb-2">
+                        <!-- User Avatar -->
+                        <div class="user-avatar me-3">
+                          <div class="avatar-circle">
+                            <span>{{ getUserInitials(feedback.userId) }}</span>
                           </div>
                         </div>
                         
-                        <div>
-                          <h6 class="mb-0 fw-bold">
-                            {{ viewMode === 'event' ? (feedback.userName || 'Anonymous User') : (feedback.eventName || 'Event') }}
-                          </h6>
-                          <small class="text-muted">
-                            <i class="bi bi-calendar me-1"></i>
-                            {{ formatDate(feedback.feedbackDate || feedback.createdDate || '') }}
-                          </small>
+                        <div class="flex-grow-1">
+                          <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                              <h6 class="mb-1 fw-bold">
+                                {{ viewMode === 'event' ? getUserName(feedback.userId) : getEventName(feedback.eventId) }}
+                              </h6>
+                        
+                              
+                              <!-- Event Details for User/Organizer View -->
+                              <div *ngIf="viewMode !== 'event'" class="event-details">
+                                <small class="text-muted d-block">
+                                  <i class="bi bi-calendar-event me-1"></i>
+                                  {{ getEventName(feedback.eventId) }}
+                                  <span *ngIf="feedback.eventId" class="ms-2">
+                                    (ID: {{ feedback.eventId }})
+                                  </span>
+                                </small>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    
                     </div>
                     
-                    <!-- Rating -->
-                    <div class="rating-display">
-                      <div class="d-flex align-items-center">
+                    <!-- Rating Display -->
+                    <div class="rating-display text-end">
+                      <div class="d-flex align-items-center justify-content-end">
                         <div class="rating-stars me-2">
                           <i *ngFor="let star of getRatingStars(feedback.rating)" 
                              class="bi" 
@@ -289,47 +296,21 @@
                              [class.bi-star]="star === 'empty'"
                              [class.text-warning]="star === 'filled'"></i>
                         </div>
-                        <span class="badge" [class]="'bg-' + getRatingColor(feedback.rating)">
+                        <span class="badge bg-primary">
                           {{ feedback.rating }}/5
                         </span>
                       </div>
+                      <small class="text-muted d-block mt-1">
+                        {{ feedback.rating >= 4 ? 'Excellent' : feedback.rating >= 3 ? 'Good' : feedback.rating >= 2 ? 'Fair' : 'Poor' }}
+                      </small>
                     </div>
                   </div>
                 </div>
                 
                 <!-- Feedback Content -->
                 <div class="col-12">
-                  <div class="feedback-content">
-                    <p class="mb-0" [innerHTML]="feedback.comments || 'No comments provided.'"></p>
-                  </div>
-                </div>
-                
-                <!-- Feedback Footer -->
-                <div class="col-12 mt-3">
-                  <div class="d-flex align-items-center justify-content-between border-top pt-2">
-                    <div class="feedback-meta">
-                      <small class="text-muted">
-                        <i class="bi bi-hash me-1"></i>
-                        ID: {{ feedback.feedbackId }}
-                        <span *ngIf="viewMode === 'user' && feedback.eventName" class="ms-3">
-                          <i class="bi bi-calendar-event me-1"></i>
-                          Event: {{ feedback.eventName }}
-                        </span>
-                        <span *ngIf="viewMode === 'event' && feedback.userEmail" class="ms-3">
-                          <i class="bi bi-envelope me-1"></i>
-                          {{ feedback.userEmail }}
-                        </span>
-                      </small>
-                    </div>
-                    
-                    <div class="feedback-actions">
-                      <button *ngIf="viewMode === 'user' && feedback.eventId" 
-                              class="btn btn-sm btn-outline-primary"
-                              (click)="goToEvent(feedback.eventId!)">
-                        <i class="bi bi-eye me-1"></i>
-                        View Event
-                      </button>
-                    </div>
+                  <div class="feedback-content bg-light p-3 rounded">
+                    <p class="mb-0">{{ feedback.comments || 'No comments provided.' }}</p>
                   </div>
                 </div>
               </div>
@@ -342,41 +323,39 @@
     <!-- Pagination -->
     <div class="row mt-4" *ngIf="!isLoading && totalPages > 1">
       <div class="col-12">
-        <div class="card border-0 shadow-sm">
+        <div class="card">
           <div class="card-body">
-            <nav aria-label="Feedback pagination">
-              <div class="d-flex align-items-center justify-content-between">
-                <!-- Page Info -->
-                <div class="pagination-info">
-                  <small class="text-muted">
-                    Showing {{ getPaginationStart() }} to 
-                    {{ getPaginationEnd() }} 
-                    of {{ filteredFeedbacks.length }} feedbacks
-                  </small>
-                </div>
-                
-                <!-- Pagination Controls -->
-                <ul class="pagination mb-0">
-                  <li class="page-item" [class.disabled]="currentPage === 1">
-                    <button class="page-link" (click)="previousPage()" [disabled]="currentPage === 1">
-                      <i class="bi bi-chevron-left"></i>
-                    </button>
-                  </li>
-                  
-                  <li *ngFor="let page of getPageNumbers()" 
-                      class="page-item" 
-                      [class.active]="page === currentPage">
-                    <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
-                  </li>
-                  
-                  <li class="page-item" [class.disabled]="currentPage === totalPages">
-                    <button class="page-link" (click)="nextPage()" [disabled]="currentPage === totalPages">
-                      <i class="bi bi-chevron-right"></i>
-                    </button>
-                  </li>
-                </ul>
+            <div class="d-flex align-items-center justify-content-between">
+              <!-- Page Info -->
+              <div class="pagination-info">
+                <small class="text-muted">
+                  Showing {{ getPaginationStart() }} to 
+                  {{ getPaginationEnd() }} 
+                  of {{ filteredFeedbacks.length }} feedbacks
+                </small>
               </div>
-            </nav>
+              
+              <!-- Pagination Controls -->
+              <ul class="pagination mb-0">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="previousPage()" [disabled]="currentPage === 1">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                </li>
+                
+                <li *ngFor="let page of getPageNumbers()" 
+                    class="page-item" 
+                    [class.active]="page === currentPage">
+                  <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
+                </li>
+                
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="nextPage()" [disabled]="currentPage === totalPages">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

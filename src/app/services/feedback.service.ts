@@ -40,6 +40,13 @@ export class FeedbackService {
       .pipe(catchError(this.handleError));
   }
 
+  //Get all feedbacks of a specific user 
+  getAllFeedbacksByUser(userId: number): Observable<Feedback[]> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<Feedback[]>(`${this.baseUrl}/getAllFeedbacksByUser/${userId}`, { headers })
+      .pipe(catchError(this.handleError));
+  }
+
   // Get average rating for a specific event
   getAverageRatingByEvent(eventId: number): Observable<number> {
     const headers = this.getAuthHeaders();
@@ -54,12 +61,6 @@ export class FeedbackService {
       .pipe(catchError(this.handleError));
   }
 
-  // Get feedbacks by user
-  getAllFeedbacksByUser(userId: number): Observable<Feedback[]> {
-    const headers = this.getAuthHeaders();
-    return this.http.get<Feedback[]>(`${this.baseUrl}/user/${userId}`, { headers })
-      .pipe(catchError(this.handleError));
-  }
 
   // Get comprehensive feedback summary for an event
   getEventFeedbackSummary(eventId: number): Observable<EventFeedbackSummary> {

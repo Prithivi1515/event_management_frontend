@@ -5,7 +5,8 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { FeedbackService, Feedback, EventFeedbackSummary } from '../../services/feedback.service';
-import { UserService } from '../../services/user.service';
+import { UserService, User } from '../../services/user.service';
+import { EventService, Event } from '../../services/event.service';
 
 @Component({
   selector: 'app-feedback-list',
@@ -19,6 +20,9 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
   feedbacks: Feedback[] = [];
   filteredFeedbacks: Feedback[] = [];
   eventFeedbackSummary: EventFeedbackSummary | null = null;
+  users: Map<number, User> = new Map(); // Store user details by userId
+  events: Map<number, Event> = new Map(); // Store event details by eventId
+  currentUser: User | null = null; // Current logged-in user
   
   // Component state
   isLoading = false;
@@ -44,7 +48,7 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
   // Filtering and sorting
   searchQuery = '';
   selectedRating: number | null = null;
-  sortBy: 'date' | 'rating' | 'name' = 'date';
+  sortBy: 'date' | 'rating' | 'name' | 'user' | 'event' = 'date';
   sortOrder: 'asc' | 'desc' = 'desc';
   
   // Pagination
@@ -66,6 +70,7 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
   constructor(
     private feedbackService: FeedbackService,
     private userService: UserService,
+    private eventService: EventService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -74,6 +79,7 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
     this.checkAuthentication();
     this.getRouteParams();
     if (this.isAuthenticated) {
+      this.loadCurrentUser();
       this.loadFeedbacks();
     }
   }
@@ -102,6 +108,22 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
       organizerId: this.organizerId,
       isOrganizer: this.isOrganizer,
       isAuthenticated: this.isAuthenticated
+    });
+  }
+
+  // Load current user details
+  private loadCurrentUser(): void {
+    if (!this.currentUserId) return;
+
+    this.userService.getUserById(this.currentUserId).subscribe({
+      next: (user) => {
+        this.currentUser = user;
+        this.users.set(this.currentUserId, user);
+        console.log('Current user loaded:', user);
+      },
+      error: (error) => {
+        console.warn('Failed to load current user details:', error);
+      }
     });
   }
 
@@ -217,8 +239,9 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
             this.averageRating = summary.averageRating;
             this.totalFeedbacks = summary.totalFeedbacks;
             this.ratingDistribution = summary.ratingDistribution;
-            this.processFeedbacks();
-            this.isLoading = false;
+            
+            // Load user and event details
+            this.loadRelatedDetails();
           },
           error: (error) => {
             console.error('Error loading event feedback summary:', error);
@@ -256,8 +279,9 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
         next: (feedbacks: Feedback[]) => {
           console.log('Feedbacks loaded:', feedbacks);
           this.feedbacks = feedbacks || [];
-          this.processFeedbacks();
-          this.isLoading = false;
+          
+          // Load user and event details
+          this.loadRelatedDetails();
         },
         error: (error) => {
           console.error('Error loading feedbacks:', error);
@@ -265,6 +289,177 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
           this.handleLoadError(error);
         }
       });
+  }
+
+  // Load user and event details for feedbacks
+  private loadRelatedDetails(): void {
+    // Get unique user IDs and event IDs
+    const userIds = [...new Set(this.feedbacks
+      .filter(feedback => feedback.userId)
+      .map(feedback => feedback.userId!))];
+    
+    const eventIds = [...new Set(this.feedbacks
+      .filter(feedback => feedback.eventId)
+      .map(feedback => feedback.eventId!))];
+
+    console.log('Loading details for users:', userIds, 'and events:', eventIds);
+
+    // Create arrays of API calls
+    const userCalls = userIds.map(userId => 
+      this.userService.getUserById(userId)
+    );
+    
+    const eventCalls = eventIds.map(eventId => 
+      this.eventService.getEventById(eventId)
+    );
+
+    // Combine all API calls
+    const allCalls = [...userCalls, ...eventCalls];
+
+    if (allCalls.length === 0) {
+      this.processFeedbacks();
+      return;
+    }
+
+    // Execute all API calls in parallel
+    forkJoin(allCalls).subscribe({
+      next: (results) => {
+        // Separate users and events from results
+        const users = results.slice(0, userCalls.length) as User[];
+        const events = results.slice(userCalls.length) as Event[];
+
+        // Store users in map for quick lookup
+        users.forEach(user => {
+          if (user && user.userId) {
+            this.users.set(user.userId, user);
+          }
+        });
+
+        // Store events in map for quick lookup
+        events.forEach(event => {
+          if (event && event.eventId) {
+            this.events.set(event.eventId, event);
+          }
+        });
+
+        // Update feedbacks with user and event names
+        this.feedbacks = this.feedbacks.map(feedback => ({
+          ...feedback,
+          userName: this.getUserName(feedback.userId),
+          userEmail: this.getUserEmail(feedback.userId),
+          eventName: this.getEventName(feedback.eventId)
+        }));
+
+        console.log('Users loaded:', this.users);
+        console.log('Events loaded:', this.events);
+        
+        this.processFeedbacks();
+      },
+      error: (error) => {
+        console.warn('Some details could not be loaded:', error);
+        // Continue with feedbacks even if some details fail
+        this.processFeedbacks();
+      }
+    });
+  }
+
+  // Get user name by ID
+  getUserName(userId?: number): string {
+    if (!userId) return 'Unknown User';
+    const user = this.users.get(userId);
+    return user?.name || 'Unknown User';
+  }
+
+  // Get user email by ID
+  getUserEmail(userId?: number): string {
+    if (!userId) return 'Unknown Email';
+    const user = this.users.get(userId);
+    return user?.email || 'Unknown Email';
+  }
+
+  // Get user contact by ID
+  getUserContact(userId?: number): string {
+    if (!userId) return 'Unknown Contact';
+    const user = this.users.get(userId);
+    return user?.contactNumber ? user.contactNumber.toString() : 'Unknown Contact';
+  }
+
+  // Get user role by ID
+  getUserRole(userId?: number): string {
+    if (!userId) return 'User';
+    const user = this.users.get(userId);
+    return user?.roles || 'User';
+  }
+
+  // Get user details by ID
+  getUserDetails(userId?: number): User | null {
+    if (!userId) return null;
+    return this.users.get(userId) || null;
+  }
+
+  // Get event name by ID
+  getEventName(eventId?: number): string {
+    if (!eventId) return 'Unknown Event';
+    const event = this.events.get(eventId);
+    return event?.name || 'Unknown Event';
+  }
+
+  // Get event details by ID
+  getEventDetails(eventId?: number): Event | null {
+    if (!eventId) return null;
+    return this.events.get(eventId) || null;
+  }
+
+  // Get user avatar initials
+  getUserInitials(userId?: number): string {
+    const userName = this.getUserName(userId);
+    if (userName === 'Unknown User') return 'UU';
+    
+    return userName
+      .split(' ')
+      .map(name => name.charAt(0).toUpperCase())
+      .join('')
+      .substring(0, 2);
+  }
+
+  // Get current user initials
+  getCurrentUserInitials(): string {
+    if (!this.currentUser) return 'U';
+    
+    return this.currentUser.name
+      .split(' ')
+      .map(name => name.charAt(0).toUpperCase())
+      .join('')
+      .substring(0, 2);
+  }
+
+  // Format contact number
+  formatContactNumber(contactNumber: number): string {
+    const numStr = contactNumber.toString();
+    if (numStr.length === 10) {
+      return `+91 ${numStr.substring(0, 5)} ${numStr.substring(5)}`;
+    }
+    return numStr;
+  }
+
+  // Get role badge color
+  getRoleBadgeColor(role: string): string {
+    switch (role.toLowerCase()) {
+      case 'admin': return 'danger';
+      case 'organizer': return 'warning';
+      case 'user': return 'primary';
+      default: return 'secondary';
+    }
+  }
+
+  // Get role icon
+  getRoleIcon(role: string): string {
+    switch (role.toLowerCase()) {
+      case 'admin': return 'bi-shield-check';
+      case 'organizer': return 'bi-person-gear';
+      case 'user': return 'bi-person';
+      default: return 'bi-person';
+    }
   }
 
   private processFeedbacks(): void {
@@ -290,18 +485,20 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
     
     // Apply filters and sorting
     this.applyFiltersAndSorting();
+    this.isLoading = false;
   }
 
   private applyFiltersAndSorting(): void {
     let filtered = [...this.feedbacks];
     
-    // Apply search filter
+    // Apply search filter - now includes user details
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase().trim();
       filtered = filtered.filter(feedback => 
         (feedback.comments && feedback.comments.toLowerCase().includes(query)) ||
-        (feedback.userName && feedback.userName.toLowerCase().includes(query)) ||
-        (feedback.eventName && feedback.eventName.toLowerCase().includes(query))
+        (this.getUserName(feedback.userId).toLowerCase().includes(query)) ||
+        (this.getUserEmail(feedback.userId).toLowerCase().includes(query)) ||
+        (this.getEventName(feedback.eventId).toLowerCase().includes(query))
       );
     }
     
@@ -324,9 +521,15 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
           comparison = a.rating - b.rating;
           break;
         case 'name':
-          const nameA = (a.userName || '').toLowerCase();
-          const nameB = (b.userName || '').toLowerCase();
+        case 'user':
+          const nameA = this.getUserName(a.userId).toLowerCase();
+          const nameB = this.getUserName(b.userId).toLowerCase();
           comparison = nameA.localeCompare(nameB);
+          break;
+        case 'event':
+          const eventA = this.getEventName(a.eventId).toLowerCase();
+          const eventB = this.getEventName(b.eventId).toLowerCase();
+          comparison = eventA.localeCompare(eventB);
           break;
       }
       
@@ -365,7 +568,6 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
 
   goToEvent(eventId: number): void {
     if (eventId) {
-      // Navigate to event details (you might need to create this route/component)
       this.router.navigate(['/events', eventId]);
     }
   }
@@ -551,11 +753,14 @@ export class FeedbackListComponent implements OnInit, OnDestroy {
   }
 
   private generateCSV(): string {
-    const headers = ['Feedback ID', 'User Name', 'Event Name', 'Rating', 'Comments', 'Date'];
+    const headers = ['Feedback ID', 'User Name', 'User Email', 'User Contact', 'User Role', 'Event Name', 'Rating', 'Comments', 'Date'];
     const rows = this.filteredFeedbacks.map(feedback => [
       feedback.feedbackId || '',
-      feedback.userName || '',
-      feedback.eventName || '',
+      this.getUserName(feedback.userId) || '',
+      this.getUserEmail(feedback.userId) || '',
+      this.getUserContact(feedback.userId) || '',
+      this.getUserRole(feedback.userId) || '',
+      this.getEventName(feedback.eventId) || '',
       feedback.rating || '',
       `"${(feedback.comments || '').replace(/"/g, '""')}"`, // Escape quotes in comments
       this.formatDate(feedback.feedbackDate || feedback.createdDate || '')

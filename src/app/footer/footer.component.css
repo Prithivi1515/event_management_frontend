@@ -1,0 +1,21 @@
+/* Simple footer styling */
+footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    margin-top: auto;
+}
+
+/* Simple link styling */
+footer a {
+    color: #6c757d;
+    text-decoration: none;
+}
+
+footer a:hover {
+    color: #495057;
+}
+
+/* Remove all transitions */
+* {
+    transition: none !important;
+}

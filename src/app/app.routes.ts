@@ -9,6 +9,7 @@ import { TicketHistoryComponent } from './ticket-history/ticket-history.componen
 import { FeedbackComponent } from './feedback/feedback.component';
 import { ProfileComponent } from './profile/profile.component';
 import { FeedbackListComponent } from './feedback/feedback-list/feedback-list.component';
+import { MyFeedbackComponent } from './feedback/my-feedback/my-feedback.component';
 
 export const routes: Routes = [
     {path: '', component: LandingPageComponent},
@@ -21,6 +22,7 @@ export const routes: Routes = [
     {path: 'feedback', component: FeedbackComponent},
     {path: 'profile', component: ProfileComponent},
     { path: 'feedback-list', component: FeedbackListComponent }, // Fallback route
-    { path: 'feedback-list/event/:eventId', component: FeedbackListComponent }
+    { path: 'feedback-list/event/:eventId', component: FeedbackListComponent },
+    {path: 'my-feedback', component: MyFeedbackComponent}
     
 ];

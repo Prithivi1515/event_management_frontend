@@ -1,0 +1,451 @@
+<div class="feedback-container">
+  <div class="container py-4">
+    
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <h3 class="mb-1">
+                  <i class="bi bi-chat-square-text me-2"></i>
+                  My Feedbacks
+                </h3>
+                <p class="mb-0">Manage your event feedback submissions</p>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-light btn-sm" (click)="goBack()">
+                  <i class="bi bi-arrow-left me-1"></i>
+                  Back to Profile
+                </button>
+                <button class="btn btn-outline-light btn-sm" (click)="refreshFeedbacks()" [disabled]="isLoading">
+                  <i class="bi bi-arrow-clockwise me-1"></i>
+                  Refresh
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="row" *ngIf="isLoading">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <div class="spinner-border text-primary mb-3">
+              <span class="visually-hidden">Loading feedbacks...</span>
+            </div>
+            <p class="text-muted mb-0">Loading your feedbacks and event details...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="row" *ngIf="!isLoading">
+      <div class="col-12">
+        <div class="alert alert-success d-flex align-items-center" *ngIf="successMessage">
+          <i class="bi bi-check-circle me-2"></i>
+          <div>{{ successMessage }}</div>
+        </div>
+        
+        <div class="alert alert-danger d-flex align-items-center" *ngIf="errorMessage">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <div>{{ errorMessage }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="row mb-4" *ngIf="!isLoading && feedbacks.length > 0">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="row g-3 align-items-end">
+              <!-- Search -->
+              <div class="col-md-4">
+                <label for="searchInput" class="form-label">Search</label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                  </span>
+                  <input type="text" 
+                         id="searchInput"
+                         class="form-control" 
+                         placeholder="Search by event, location, category..."
+                         [(ngModel)]="searchQuery"
+                         (input)="onSearchChange()">
+                  <button *ngIf="searchQuery" 
+                          class="btn btn-outline-secondary" 
+                          type="button"
+                          (click)="searchQuery = ''; onSearchChange()">
+                    <i class="bi bi-x"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Rating Filter -->
+              <div class="col-md-2">
+                <label for="ratingFilter" class="form-label">Rating</label>
+                <select id="ratingFilter" 
+                        class="form-select" 
+                        [(ngModel)]="selectedRating"
+                        (change)="onRatingFilterChange()">
+                  <option [ngValue]="null">All Ratings</option>
+                  <option [ngValue]="5">5 Stars</option>
+                  <option [ngValue]="4">4 Stars</option>
+                  <option [ngValue]="3">3 Stars</option>
+                  <option [ngValue]="2">2 Stars</option>
+                  <option [ngValue]="1">1 Star</option>
+                </select>
+              </div>
+              
+              <!-- Sort By -->
+              <div class="col-md-2">
+                <label for="sortBy" class="form-label">Sort By</label>
+                <select id="sortBy" 
+                        class="form-select" 
+                        [(ngModel)]="sortBy"
+                        (change)="onSortChange()">
+                  <option value="date">Date</option>
+                  <option value="rating">Rating</option>
+                  <option value="event">Event Name</option>
+                </select>
+              </div>
+              
+              
+              <!-- Clear Filters -->
+              <div class="col-md-2">
+                <button class="btn btn-outline-primary w-100" (click)="clearFilters()">
+                  <i class="bi bi-x-circle me-1"></i>
+                  Clear All
+                </button>
+              </div>
+            </div>
+            
+            <!-- Results Count -->
+            <div class="mt-3 text-muted">
+              <small>
+                Showing {{ filteredFeedbacks.length }} of {{ feedbacks.length }} feedbacks
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Feedbacks Message -->
+    <div class="row" *ngIf="!isLoading && feedbacks.length === 0">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <i class="bi bi-chat-square-text display-1 text-muted mb-3"></i>
+            <h4 class="text-muted mb-2">No Feedbacks Yet</h4>
+            <p class="text-muted mb-0">
+              You haven't submitted any feedback yet. Attend events and share your experience!
+            </p>
+            <div class="mt-3">
+              <button class="btn btn-primary" (click)="goToEvents()">
+                <i class="bi bi-calendar-event me-2"></i>
+                Browse Events
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Results Message -->
+    <div class="row" *ngIf="!isLoading && feedbacks.length > 0 && filteredFeedbacks.length === 0">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center py-4">
+            <i class="bi bi-search display-4 text-muted mb-3"></i>
+            <h5 class="text-muted mb-2">No Results Found</h5>
+            <p class="text-muted mb-0">
+              Try adjusting your search criteria or filters.
+            </p>
+            <div class="mt-3">
+              <button class="btn btn-outline-primary" (click)="clearFilters()">
+                <i class="bi bi-arrow-clockwise me-2"></i>
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback Cards with Event Details -->
+    <div class="row" *ngIf="!isLoading && getPaginatedFeedbacks().length > 0">
+      <div class="col-12">
+        <div class="feedback-cards">
+          <div class="card feedback-card mb-3" *ngFor="let feedback of getPaginatedFeedbacks()">
+            <div class="card-body">
+              <div class="row">
+                <!-- Event Info Header -->
+                <div class="col-12">
+                  <div class="d-flex align-items-start justify-content-between mb-3">
+                    <div class="event-info flex-grow-1">
+                      <h6 class="mb-2 fw-bold">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        {{ getEventName(feedback.eventId) }}
+                      </h6>
+                      
+                      <!-- Event Details Row -->
+                      <div class="row g-2 small text-muted mb-2">
+                        <div class="col-md-6">
+                          <i class="bi bi-geo-alt me-1"></i>
+                          <strong>Location:</strong> {{ getEventLocation(feedback.eventId) }}
+                        </div>
+                        <div class="col-md-6">
+                          <i class="bi bi-calendar3 me-1"></i>
+                          <strong>Date:</strong> {{ getEventDate(feedback.eventId) }}
+                        </div>
+                        <div class="col-md-6">
+                          <i class="bi bi-tag me-1"></i>
+                          <strong>Category:</strong> {{ getEventCategory(feedback.eventId) }}
+                        </div>
+                      </div>
+                      
+                    </div>
+                    
+                    <!-- Rating Display -->
+                    <div class="rating-display text-end">
+                      <div class="d-flex align-items-center justify-content-end">
+                        <div class="rating-stars me-2">
+                          <i *ngFor="let star of getRatingStars(feedback.rating)" 
+                             class="bi" 
+                             [class.bi-star-fill]="star === 'filled'"
+                             [class.bi-star]="star === 'empty'"></i>
+                        </div>
+                        <span class="badge bg-primary">
+                          {{ feedback.rating }}/5
+                        </span>
+                      </div>
+                      <small class="text-muted d-block mt-1">
+                        {{ getRatingText(feedback.rating) }}
+                      </small>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Feedback Content -->
+                <div class="col-12">
+                  <div class="feedback-content">
+                    <p class="mb-0">{{ feedback.comments || 'No comments provided.' }}</p>
+                  </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="col-12 mt-3">
+                  <div class="d-flex align-items-center justify-content-between border-top pt-2">
+                    
+                    <div class="feedback-actions">
+                      <div class="btn-group">
+                        <button class="btn btn-outline-primary btn-sm" 
+                                (click)="openEditModal(feedback)"
+                                [disabled]="isUpdating || isDeleting">
+                          <i class="bi bi-pencil me-1"></i>
+                          Edit
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" 
+                                (click)="openDeleteModal(feedback)"
+                                [disabled]="isUpdating || isDeleting">
+                          <i class="bi bi-trash me-1"></i>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="row mt-4" *ngIf="!isLoading && totalPages > 1">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between">
+              <!-- Page Info -->
+              <div class="pagination-info">
+                <small class="text-muted">
+                  Page {{ currentPage }} of {{ totalPages }} 
+                  ({{ filteredFeedbacks.length }} feedbacks)
+                </small>
+              </div>
+              
+              <!-- Pagination Controls -->
+              <ul class="pagination mb-0">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="previousPage()" [disabled]="currentPage === 1">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                </li>
+                
+                <li *ngFor="let page of getPageNumbers()" 
+                    class="page-item" 
+                    [class.active]="page === currentPage">
+                  <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
+                </li>
+                
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="nextPage()" [disabled]="currentPage === totalPages">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Edit Feedback Modal -->
+<div class="modal" [class.show]="showEditModal" [style.display]="showEditModal ? 'block' : 'none'"
+     *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil me-2"></i>
+          Edit Feedback
+        </h5>
+        <button type="button" class="btn-close" (click)="closeEditModal()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Event Info in Modal -->
+        <div class="alert alert-info mb-3" *ngIf="editingFeedback">
+          <h6 class="mb-2">
+            <i class="bi bi-calendar-event me-2"></i>
+            {{ getEventName(editingFeedback.eventId) }}
+          </h6>
+          <div class="row g-2 small">
+            <div class="col-6">
+              <strong>Location:</strong> {{ getEventLocation(editingFeedback.eventId) }}
+            </div>
+            <div class="col-6">
+              <strong>Category:</strong> {{ getEventCategory(editingFeedback.eventId) }}
+            </div>
+            <div class="col-6">
+              <strong>Date:</strong> {{ getEventDate(editingFeedback.eventId) }}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Rating -->
+        <div class="mb-3">
+          <label class="form-label">Rating *</label>
+          <div class="edit-rating-stars">
+            <button type="button"
+                    class="rating-star"
+                    *ngFor="let i of [1,2,3,4,5]"
+                    (click)="editForm.rating = i"
+                    [class.active]="i <= editForm.rating">
+              <i class="bi bi-star-fill"></i>
+            </button>
+          </div>
+          <small class="form-text text-muted">
+            {{ editForm.rating }}/5 - {{ getRatingText(editForm.rating) }}
+          </small>
+        </div>
+        
+        <!-- Comments -->
+        <div class="mb-3">
+          <label for="editComments" class="form-label">Comments *</label>
+          <textarea id="editComments"
+                    class="form-control" 
+                    rows="4"
+                    [(ngModel)]="editForm.comments"
+                    placeholder="Share your updated feedback..."
+                    maxlength="500"
+                    required></textarea>
+          <div class="d-flex justify-content-between align-items-center mt-1">
+            <small class="form-text text-muted">
+              Share your honest experience
+            </small>
+            <small class="form-text" [class.text-warning]="isCharacterLimitReached()">
+              {{ getCharacterCount() }}
+            </small>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeEditModal()" [disabled]="isUpdating">
+          Cancel
+        </button>
+        <button type="button" 
+                class="btn btn-primary" 
+                (click)="updateFeedback()"
+                [disabled]="!isEditFormValid() || isUpdating">
+          <span *ngIf="isUpdating" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!isUpdating" class="bi bi-check me-2"></i>
+          {{ isUpdating ? 'Updating...' : 'Update Feedback' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" [class.show]="showDeleteModal" [style.display]="showDeleteModal ? 'block' : 'none'"
+     *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-trash me-2"></i>
+          Delete Feedback
+        </h5>
+        <button type="button" class="btn-close" (click)="closeDeleteModal()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Are you sure you want to delete this feedback?</strong>
+        </div>
+        
+        <div *ngIf="deletingFeedback">
+          <p><strong>Event:</strong> {{ getEventName(deletingFeedback.eventId) }}</p>
+          <p><strong>Location:</strong> {{ getEventLocation(deletingFeedback.eventId) }}</p>
+          <p><strong>Rating:</strong> {{ deletingFeedback.rating }}/5</p>
+          <p><strong>Comments:</strong> {{ deletingFeedback.comments || 'No comments' }}</p>
+        </div>
+        
+        <p class="text-muted mb-0">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeDeleteModal()" [disabled]="isDeleting">
+          Cancel
+        </button>
+        <button type="button" 
+                class="btn btn-outline-danger" 
+                (click)="deleteFeedback()"
+                [disabled]="isDeleting">
+          <span *ngIf="isDeleting" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!isDeleting" class="bi bi-trash me-2"></i>
+          {{ isDeleting ? 'Deleting...' : 'Delete Feedback' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrops -->
+<div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()"></div>
+<div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDeleteModal()"></div>

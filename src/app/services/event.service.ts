@@ -12,7 +12,7 @@ export interface Event {
   date: string;
   organizerId: number;
   ticketCount: number;
-  price: number;              // Added price field
+  price: number;              
   description?: string;
   time?: string;
   venue?: string;

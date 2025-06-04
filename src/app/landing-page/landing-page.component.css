@@ -55,7 +55,7 @@
     border: none;
 }
 .btn-primary:hover, .btn-outline-primary:hover {
-    background: linear-gradient(90deg, #ff9100 60%, #00bfae 100%);
+    background: linear-gradient(90deg, #2f366b 0%, #00bfae 100%);
     color: #fff;
 }
 
