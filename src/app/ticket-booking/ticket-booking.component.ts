@@ -265,112 +265,78 @@ export class TicketBookingComponent implements OnInit, OnDestroy {
     this.showErrorMessage(errorMessage);
     this.router.navigate(['/events']);
   }
+onSubmit(): void {
+  console.log('Form submission started');
+  console.log('Form valid:', this.bookingForm.valid);
+  console.log('Form value:', this.bookingForm.value);
 
-  onSubmit(): void {
-    console.log('Form submission started');
-    console.log('Form valid:', this.bookingForm.valid);
-    console.log('Form value:', this.bookingForm.value);
+  if (!this.bookingForm.valid || !this.event) {
+    console.log('Form invalid or no event data');
+    this.markFormGroupTouched();
+    this.showErrorMessage('Please fill all required fields correctly');
+    return;
+  }
 
-    if (!this.bookingForm.valid || !this.event) {
-      console.log('Form invalid or no event data');
-      this.markFormGroupTouched();
-      this.showErrorMessage('Please fill all required fields correctly');
-      return;
-    }
+  if (this.submitting) {
+    console.log('Already submitting, ignoring duplicate request');
+    return;
+  }
 
-    if (this.submitting) {
-      console.log('Already submitting, ignoring duplicate request');
-      return;
-    }
+  this.submitting = true;
 
-    this.submitting = true;
-
-    // Get the quantity from the form
-    const quantity = this.bookingForm.get('numberOfTickets')?.value || 1;
-    
-    // Create booking request with quantity
-    const bookingRequest: BookingRequest = {
-      eventId: this.event.eventId || this.event.id || this.eventId,
+  //redirect to payment
+  this.proceedToPayment();
+}
+private proceedToPayment(): void {
+  console.log('Proceeding to payment without booking ticket yet');
+  
+  // Get the quantity from the form
+  const quantity = this.bookingForm.get('numberOfTickets')?.value || 1;
+  
+  // Prepare payment data (including booking request data for later use)
+  const paymentData = {
+    eventId: this.event?.eventId || this.event?.id || this.eventId,
+    userId: this.currentUserId,
+    quantity: quantity,
+    totalAmount: this.getTotalAmount(),
+    customerDetails: this.bookingForm.get('customerDetails')?.value,
+    event: {
+      name: this.event?.name || '',
+      date: this.event?.date || '',
+      location: this.event?.venue || this.event?.location || '',
+      price: this.event?.ticketPrice || 0,
+      category: this.event?.category || '',
+      description: this.event?.description || '',
+      imageUrl: this.event?.imageUrl || ''
+    },
+    // Include the booking request data for after payment
+    bookingRequest: {
+      eventId: this.event?.eventId || this.event?.id || this.eventId,
       userId: this.currentUserId,
-      quantity: quantity // Include quantity in the request
-    };
-
-    console.log('Submitting booking request with quantity:', bookingRequest);
-
-    // Use TicketService to book the ticket
-    const bookingSubscription = this.ticketService.bookTicket(bookingRequest).subscribe({
-      next: (response) => {
-        console.log('Booking successful:', response);
-        this.submitting = false;
-        this.handleBookingSuccess(response.message);
-      },
-      error: (error: HttpErrorResponse) => {
-        console.error('Booking failed:', error);
-        this.submitting = false;
-        this.handleBookingError(error);
-      }
-    });
-
-    this.subscriptions.push(bookingSubscription);
-  }
-
-  private handleBookingSuccess(message: string): void {
-    const successMessage = message || 'Ticket booked successfully!';
-    this.showSuccessMessage(successMessage);
-    
-    setTimeout(() => {
-      this.router.navigate(['/events '], {
-        queryParams: { 
-          message: 'Ticket booked successfully!'
-        }
-      });
-    }, 2000);
-  }
-
-  private handleBookingError(error: HttpErrorResponse): void {
-    console.log('Booking error details:', {
-      status: error.status,
-      statusText: error.statusText,
-      error: error.error,
-      message: error.message
-    });
-
-    let errorMessage = 'Booking failed. Please try again.';
-
-    switch (error.status) {
-      case 400:
-        const badRequestMsg = error.error?.message || error.error || 'Invalid booking request';
-        errorMessage = `Bad request: ${badRequestMsg}`;
-        break;
-      case 401:
-        errorMessage = 'Session expired. Please login again.';
-        this.redirectToLogin();
-        return;
-      case 403:
-        errorMessage = 'You do not have permission to book this ticket.';
-        break;
-      case 404:
-        errorMessage = 'Event not found or no longer available.';
-        break;
-      case 409:
-        errorMessage = 'Event is sold out or insufficient tickets available.';
-        break;
-      case 422:
-        errorMessage = 'Invalid booking data. Please check your information.';
-        break;
-      case 500:
-        errorMessage = 'Server error. Please try again later.';
-        break;
-      case 0:
-        errorMessage = 'Network error. Please check your connection and try again.';
-        break;
-      default:
-        const defaultMsg = error.error?.message || error.message || 'Unknown error';
-        errorMessage = `Booking failed: ${defaultMsg}`;
+      quantity: quantity
     }
+  };
 
-    this.showErrorMessage(errorMessage);
-  }
+  console.log('Redirecting to payment with data:', paymentData);
+
+  // Show success message briefly before redirecting
+  this.showSuccessMessage('Booking details confirmed! Redirecting to payment...');
+
+  // Navigate to payment page with booking data
+  setTimeout(() => {
+    this.router.navigate(['/payment'], {
+      state: paymentData
+    });
+    this.submitting = false; // Reset submitting state
+  }, 1500);
+}
+
+// Remove the old handleBookingSuccess method as we're not booking yet
+// Remove the old handleBookingError method as we're not booking yet
+
+// ...rest of existing code remains the same...
+
+  
 
   goBack(): void {
     this.router.navigate(['/events']);

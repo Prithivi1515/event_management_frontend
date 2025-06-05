@@ -1,17 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'login',
   standalone: true,
-  imports: [FormsModule, RouterLink, HttpClientModule, CommonModule],
+  imports: [FormsModule, RouterLink, CommonModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   username: string = '';
   password: string = '';
   rememberMe: boolean = false;
@@ -22,6 +22,12 @@ export class LoginComponent {
   private apiUrl = 'http://localhost:9090/auth/authenticate';
 
   constructor(private router: Router, private http: HttpClient) {}
+  ngOnInit(): void {
+    if(this.isLoggedIn()) {
+      // If user is already logged in, redirect to landing page
+      this.router.navigate(['/']);
+    }
+  }
 
   validate(form: NgForm) {
     if (form.valid) {

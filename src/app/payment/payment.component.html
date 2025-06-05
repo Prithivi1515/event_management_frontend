@@ -1,0 +1,233 @@
+<div class="payment-container">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        
+        <!-- Payment Header -->
+        <div class="text-center mb-4">
+          <h2 class="h3 mb-3">
+            <i class="bi bi-credit-card me-2"></i>
+            Payment Processing
+          </h2>
+          <p class="text-muted">Secure payment powered by Razorpay</p>
+        </div>
+
+        <!-- Payment Steps Progress -->
+        <div class="payment-steps mb-4">
+          <div class="step-indicator">
+            <div class="step" [class.active]="currentStep === 1" [class.completed]="currentStep > 1">
+              <div class="step-number">1</div>
+              <div class="step-label">Review</div>
+            </div>
+            <div class="step-line" [class.completed]="currentStep > 1"></div>
+            <div class="step" [class.active]="currentStep === 2" [class.completed]="currentStep > 2">
+              <div class="step-number">2</div>
+              <div class="step-label">Payment</div>
+            </div>
+            <div class="step-line" [class.completed]="currentStep > 2"></div>
+            <div class="step" [class.active]="currentStep === 3" [class.completed]="currentStep > 3">
+              <div class="step-number">3</div>
+              <div class="step-label">Booking</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1: Review Order -->
+        <div class="card payment-card" *ngIf="currentStep === 1">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-receipt me-2"></i>
+              Review Your Order
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="event-summary" *ngIf="paymentData">
+              <h6 class="fw-bold">{{ paymentData.event.name }}</h6>
+              <p class="mb-2">
+                <i class="bi bi-calendar me-2"></i>
+                {{ formatDate(paymentData.event.date) }}
+              </p>
+              <p class="mb-2">
+                <i class="bi bi-geo-alt me-2"></i>
+                {{ paymentData.event.location }}
+              </p>
+              <div class="row mt-3">
+                <div class="col-6"><strong>Tickets:</strong></div>
+                <div class="col-6">{{ paymentData.quantity }}</div>
+                <div class="col-6"><strong>Price per ticket:</strong></div>
+                <div class="col-6">{{ formatAmount(paymentData.event.price) }}</div>
+                <div class="col-6"><strong>Total Amount:</strong></div>
+                <div class="col-6 fw-bold text-primary">{{ formatAmount(paymentData.totalAmount) }}</div>
+              </div>
+            </div>
+
+            <div class="customer-details mt-4" *ngIf="paymentData">
+              <h6 class="fw-bold mb-3">Customer Details</h6>
+              <div class="row">
+                <div class="col-sm-4"><strong>Name:</strong></div>
+                <div class="col-sm-8">{{ paymentData.customerDetails.name }}</div>
+                <div class="col-sm-4"><strong>Email:</strong></div>
+                <div class="col-sm-8">{{ paymentData.customerDetails.email }}</div>
+                <div class="col-sm-4"><strong>Phone:</strong></div>
+                <div class="col-sm-8">{{ paymentData.customerDetails.phone }}</div>
+              </div>
+            </div>
+
+            <div class="d-grid mt-4">
+              <button class="btn btn-payment btn-lg" (click)="proceedToPayment()" [disabled]="isProcessing">
+                <i class="bi bi-shield-check me-2"></i>
+                Proceed to Secure Payment
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Payment Processing -->
+        <div class="card payment-card" *ngIf="currentStep === 2">
+          <div class="card-body text-center p-4">
+            <div class="processing-state">
+              <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Processing...</span>
+              </div>
+              <h4 class="text-warning mb-3">
+                <i class="bi bi-clock-history me-2"></i>
+                Processing Payment
+              </h4>
+              <p class="text-muted mb-4">
+                Please complete the payment in the Razorpay window.<br>
+                After payment, we'll confirm your booking.
+              </p>
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Important:</strong> Your ticket will be booked only after successful payment.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Payment & Booking Result -->
+        <div class="card payment-card" *ngIf="currentStep === 3">
+          <div class="card-body text-center p-4">
+            
+            <!-- Success State -->
+            <div *ngIf="paymentStatus === 'success'" class="success-state">
+              <div class="success-animation mb-3">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+              </div>
+              <h4 class="text-success mb-3">
+                Payment & Booking Successful!
+              </h4>
+              <p class="text-muted mb-4">
+                Your payment has been processed and your ticket has been booked successfully.
+              </p>
+              
+              <div class="booking-details" *ngIf="bookingConfirmation">
+                <div class="alert alert-success">
+                  <h6 class="alert-heading">Booking Confirmed</h6>
+                  <hr>
+                  <div class="row">
+                    <div class="col-6"><strong>Booking ID:</strong></div>
+                    <div class="col-6">#{{ bookingConfirmation.bookingId }}</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-6"><strong>Event:</strong></div>
+                    <div class="col-6">{{ bookingConfirmation.eventName }}</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-6"><strong>Tickets:</strong></div>
+                    <div class="col-6">{{ bookingConfirmation.quantity }}</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-6"><strong>Amount Paid:</strong></div>
+                    <div class="col-6">{{ formatAmount(bookingConfirmation.totalAmount) }}</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-6"><strong>Payment ID:</strong></div>
+                    <div class="col-6">{{ bookingConfirmation.paymentId }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-grid gap-2 d-md-block">
+                <button class="btn btn-primary me-2" (click)="goToMyBookings()">
+                  <i class="bi bi-ticket-perforated me-2"></i>
+                  View My Bookings
+                </button>
+                <button class="btn btn-outline-secondary" (click)="goToEvents()">
+                  <i class="bi bi-arrow-left me-2"></i>
+                  Back to Events
+                </button>
+              </div>
+            </div>
+
+            <!-- Failed State -->
+            <div *ngIf="paymentStatus === 'failed'" class="failed-state">
+              <div class="error-animation mb-3">
+                <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+              </div>
+              <h4 class="text-danger mb-3">
+                {{ bookingConfirmation?.status === 'payment_success_booking_failed' ? 'Booking Failed' : 'Payment Failed' }}
+              </h4>
+              <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                {{ errorMessage }}
+              </div>
+              
+              <!-- Special case for payment success but booking failure -->
+              <div *ngIf="bookingConfirmation?.status === 'payment_success_booking_failed'" class="alert alert-warning mt-3">
+                <strong>Payment ID:</strong> {{ bookingConfirmation.paymentId }}<br>
+                <small>Please save this payment ID and contact support for assistance.</small>
+              </div>
+              
+              <div class="d-grid gap-2 d-md-block">
+                <button class="btn btn-primary me-2" (click)="retryPayment()" [disabled]="isProcessing"
+                        *ngIf="bookingConfirmation?.status !== 'payment_success_booking_failed'">
+                  <i class="bi bi-arrow-clockwise me-2"></i>
+                  Retry Payment
+                </button>
+                <button class="btn btn-outline-secondary" (click)="goBackToBooking()">
+                  <i class="bi bi-arrow-left me-2"></i>
+                  Back to Booking
+                </button>
+              </div>
+            </div>
+
+            <!-- Cancelled State -->
+            <div *ngIf="paymentStatus === 'cancelled'" class="cancelled-state">
+              <div class="cancelled-animation mb-3">
+                <i class="bi bi-dash-circle-fill text-secondary" style="font-size: 4rem;"></i>
+              </div>
+              <h4 class="text-secondary mb-3">
+                Payment Cancelled
+              </h4>
+              <p class="text-muted mb-4">
+                You cancelled the payment. No amount has been charged and no booking was made.
+              </p>
+              
+              <div class="d-grid gap-2 d-md-block">
+                <button class="btn btn-primary me-2" (click)="retryPayment()" [disabled]="isProcessing">
+                  <i class="bi bi-credit-card me-2"></i>
+                  Try Again
+                </button>
+                <button class="btn btn-outline-secondary" (click)="goBackToBooking()">
+                  <i class="bi bi-arrow-left me-2"></i>
+                  Back to Booking
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="text-center mt-4">
+          <small class="text-muted">
+            <i class="bi bi-shield-check me-1"></i>
+            Secured by Razorpay | 256-bit SSL encryption
+          </small>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

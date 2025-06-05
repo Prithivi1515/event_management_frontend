@@ -199,6 +199,12 @@
                   <strong class="fs-5">Total Amount:</strong>
                   <strong class="text-primary fs-4">{{ formatPrice(getTotalAmount()) }}</strong>
                 </div>
+                <div class="alert alert-info mt-3 mb-0">
+                  <i class="bi bi-info-circle me-2"></i>
+                  <small>
+                    <strong>Next Step:</strong> You will be redirected to a secure payment page after confirming your booking details.
+                  </small>
+                </div>
               </div>
             </div>
           </div>
@@ -242,19 +248,18 @@
                         [disabled]="submitting">
                   <i class="bi bi-x-circle me-2"></i>Cancel
                 </button>
-                <!-- Fixed: Removed optional chaining warning -->
                 <button type="submit" class="btn btn-primary btn-lg" 
                         [disabled]="bookingForm.invalid || submitting || !hasAvailableSeats()">
                   <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  <i *ngIf="!submitting" class="bi bi-ticket-perforated me-2"></i>
-                  {{ submitting ? 'Processing...' : 'Confirm Booking - ' + formatPrice(getTotalAmount()) }}
+                  <i *ngIf="!submitting" class="bi bi-credit-card me-2"></i>
+                  {{ submitting ? 'Processing...' : 'Proceed to Payment - ' + formatPrice(getTotalAmount()) }}
                 </button>
               </div>
               
               <div class="text-center mt-3">
                 <small class="text-muted">
                   <i class="bi bi-shield-check me-1"></i>
-                  Your booking is secure and protected. Total: {{ formatPrice(getTotalAmount()) }}
+                  Your booking will be confirmed after successful payment. Total: {{ formatPrice(getTotalAmount()) }}
                 </small>
               </div>
             </div>
