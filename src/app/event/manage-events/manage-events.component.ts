@@ -1026,12 +1026,10 @@ export class ManageEventsComponent implements OnInit, OnDestroy {
 
   private showSuccessMessage(message: string) {
     console.log('Success:', message);
-    alert(`✅ ${message}`);
   }
 
   private showErrorMessage(message: string) {
     console.error('Error:', message);
-    alert(`❌ ${message}`);
   }
 
   private logout() {

@@ -173,7 +173,7 @@ export class EventListComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Fixed: Unified API method to load all events
+  //Unified API method to load all events
   loadAllEvents(): void {
     if (this.isLoading) return;
     
@@ -199,7 +199,7 @@ export class EventListComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Fixed: Unified filter application method
+  //Unified filter application method
   applyAllFilters(): void {
     console.log('Applying filters:', {
       search: this.searchTerm,
@@ -220,7 +220,7 @@ export class EventListComponent implements OnInit, OnDestroy {
     this.filterSubject.next();
   }
 
-  // Fixed: Comprehensive filtering logic
+  // Comprehensive filtering logic
   private performFiltering(): void {
     let filtered = [...this.allEvents];
     
@@ -271,7 +271,7 @@ export class EventListComponent implements OnInit, OnDestroy {
     console.log('Final filtered events:', this.filteredEvents.length);
   }
 
-  // Fixed: Date range matching
+  // Date range matching
   private matchesDateRange(eventDate: string, dateRange: string): boolean {
     if (!dateRange) return true;
     
@@ -313,7 +313,7 @@ export class EventListComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Fixed: Event handlers
+  // Event handlers
   onSearchInput(value: string): void {
     this.searchSubject.next(value);
   }
@@ -333,7 +333,7 @@ export class EventListComponent implements OnInit, OnDestroy {
     this.applyAllFilters();
   }
 
-  // Fixed: Clear filters method
+  //  Clear filters method
   clearFilters(): void {
     console.log('Clearing all filters');
     this.searchTerm = '';
@@ -352,7 +352,7 @@ export class EventListComponent implements OnInit, OnDestroy {
     this.applyAllFilters();
   }
 
-  // Fixed: Manual filter application
+  // Manual filter application
   applyFilters(): void {
     console.log('Manual filter application triggered');
     this.applyAllFilters();

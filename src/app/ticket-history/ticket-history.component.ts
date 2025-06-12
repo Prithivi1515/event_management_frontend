@@ -795,14 +795,12 @@ export class TicketHistoryComponent implements OnInit, OnDestroy {
   private showSuccess(message: string): void {
     console.log('Success:', message);
     
-    alert('✅ Success!\n\n' + message);
   }
 
   private showError(message: string): void {
     console.error('Error:', message);
     this.error = message;
     
-    alert('❌ Error!\n\n' + message);
     
     setTimeout(() => {
       if (this.error === message) {

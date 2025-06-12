@@ -138,7 +138,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private populateForm(): void {
-    // Fixed: Ensure all fields are properly populated
+    //  Ensure all fields are properly populated
     this.userForm = {
       name: this.user.name || '',
       email: this.user.email || '',
@@ -214,7 +214,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  // Fixed: Enhanced form validation
+  //  Enhanced form validation
   isFormValid(): boolean {
     // Basic validation
     if (!this.userForm.name.trim()) {
@@ -239,7 +239,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    // Fixed: Contact number validation for Indian phone numbers
+    // Contact number validation for Indian phone numbers
     const contactStr = this.userForm.contactNumber.toString();
     if (!/^[6-9]\d{9}$/.test(contactStr)) {
       return false;
@@ -270,7 +270,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return true;
   }
 
-  // Fixed: Enhanced validation error messages
+  // Enhanced validation error messages
   getValidationError(): string {
     if (!this.userForm.name.trim()) {
       return 'Name is required and cannot be empty';
@@ -328,7 +328,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  // Fixed: Enhanced update profile method
+  //  Enhanced update profile method
   updateProfile(form: NgForm): void {
     console.log('Update profile called');
     
@@ -354,13 +354,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.isUpdating = true;
     this.clearMessages();
 
-    // Fixed: Prepare update data with proper password handling
+    // Prepare update data with proper password handling
     const updateData: UserUpdateRequest = {
       name: this.userForm.name.trim(),
       email: this.userForm.email.trim().toLowerCase(),
       password: this.showPasswordField && this.userForm.password ? 
                 this.userForm.password : 
-                (this.originalUserData.password || 'keep_existing'), // Don't change password if not updating
+                (this.originalUserData.password || 'keep_existing'), 
       contactNumber: this.userForm.contactNumber,
       roles: finalRole
     };
@@ -385,7 +385,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Fixed: Complete the handleUpdateSuccess method
+  //  Complete the handleUpdateSuccess method
   private handleUpdateSuccess(response: any, updateData: UserUpdateRequest): void {
     this.isUpdating = false;
     this.isEditMode = false;

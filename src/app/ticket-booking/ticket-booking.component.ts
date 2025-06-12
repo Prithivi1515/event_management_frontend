@@ -319,9 +319,6 @@ private proceedToPayment(): void {
 
   console.log('Redirecting to payment with data:', paymentData);
 
-  // Show success message briefly before redirecting
-  this.showSuccessMessage('Booking details confirmed! Redirecting to payment...');
-
   // Navigate to payment page with booking data
   setTimeout(() => {
     this.router.navigate(['/payment'], {
@@ -404,12 +401,10 @@ private proceedToPayment(): void {
 
   private showSuccessMessage(message: string): void {
     console.log('Success:', message);
-    alert('✅ ' + message);
   }
 
   private showErrorMessage(message: string): void {
     console.error('Error:', message);
-    alert('❌ ' + message);
   }
 
   formatDate(dateString: string): string {
