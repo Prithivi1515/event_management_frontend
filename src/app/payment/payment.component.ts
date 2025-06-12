@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute} from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { TicketService, BookingRequest } from '../services/ticket.service';
@@ -80,7 +80,7 @@ interface PaymentSaveRequest {
 @Component({
   selector: 'app-payment',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './payment.component.html',
   styleUrl: './payment.component.css'
 })
